@@ -1,0 +1,2851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureAuth Connect — Security</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F9FAFB;
+    --bg-white: #FFFFFF;
+    --border: #E5E7EB;
+    --border-dark: #D1D5DB;
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-tertiary: #4B5563;
+    --text-muted: #6B7280;
+    --text-placeholder: #9CA3AF;
+    --primary: #2563EB;
+    --primary-hover: #1D4ED8;
+    --primary-light: #EFF6FF;
+    --primary-border: #BFDBFE;
+    --success: #059669;
+    --success-light: #ECFDF5;
+    --success-border: #A7F3D0;
+    --warning: #D97706;
+    --warning-light: #FFFBEB;
+    --warning-border: #FDE68A;
+    --danger: #DC2626;
+    --danger-light: #FEF2F2;
+    --danger-border: #FECACA;
+    --nav-bg: #0F172A;
+    --nav-text: #94A3B8;
+    --nav-active: #FFFFFF;
+    --nav-hover: #1E293B;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.5;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ===== GLOBAL HEADER ===== */
+  .global-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--nav-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 20;
+  }
+  .global-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .global-header-logo svg { flex-shrink: 0; }
+  .global-header-logo span {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .global-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 600;
+  }
+
+  /* ===== LEFT NAV ===== */
+  .nav {
+    width: 240px;
+    position: fixed;
+    left: 0;
+    top: 56px;
+    bottom: 0;
+    background: #FFFFFF;
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+  }
+  .nav-items { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    color: var(--text-tertiary); text-decoration: none;
+    font-size: 15px; font-weight: 500;
+    transition: all 0.15s; cursor: pointer;
+    border-right: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text-primary); background: #F9FAFB; }
+  .nav-item.active { color: var(--primary); background: var(--primary-light); border-right-color: var(--primary); }
+  .nav-item svg { flex-shrink: 0; width: 22px; height: 22px; }
+  .nav-item.active svg { stroke: var(--primary); }
+
+  /* ===== MAIN ===== */
+  .main {
+    margin-left: 240px;
+    margin-top: 56px;
+    flex: 1; min-height: calc(100vh - 56px);
+  }
+
+  /* Top bar (sub-header) */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 32px;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 56px;
+    z-index: 5;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-title { font-size: 16px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .mode-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+    border: 1px solid var(--border);
+    background: var(--bg-white);
+    color: var(--text-muted);
+  }
+  .mode-toggle:hover { border-color: var(--primary); color: var(--primary); }
+  .mode-toggle.workforce { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* Content */
+  .content { max-width: 860px; margin: 0 auto; padding: 28px 32px 48px; }
+
+  .page-header { margin-bottom: 24px; text-align: center; }
+  .page-header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .page-header p { font-size: 14px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .card:not(.collapsed) .card-header { border-bottom-color: var(--border); }
+  .card-header-left { display: flex; align-items: center; gap: 10px; }
+  .card-header-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .card-header h2 { font-size: 15px; font-weight: 600; }
+  .card-header .subtitle { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+  .card-count {
+    background: var(--primary-light); color: var(--primary);
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+  }
+  .card-header-right { display: flex; align-items: center; gap: 10px; }
+  .chevron {
+    transition: transform 0.2s;
+    color: var(--text-placeholder);
+  }
+  .card.collapsed .chevron { transform: rotate(-90deg); }
+  .card.collapsed .card-body { display: none; }
+  .card-body { padding: 0; }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; font-size: 13px; font-weight: 500;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-dark);
+    background: var(--bg-white); color: var(--text-secondary);
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap; font-family: inherit;
+  }
+  .btn:hover { background: var(--bg); border-color: var(--text-muted); }
+  .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-setup { background: var(--primary-light); color: var(--primary); border-color: var(--primary-border); }
+  .btn-setup:hover { background: #DBEAFE; }
+  .btn-ghost { background: transparent; border-color: transparent; padding: 7px 10px; }
+  .btn-ghost:hover { background: var(--bg); }
+  .btn-danger-text { color: var(--danger); background: transparent; border-color: transparent; }
+  .btn-danger-text:hover { background: var(--danger-light); }
+  .btn-link { background: none; border: none; color: var(--primary); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .btn-link:hover { text-decoration: underline; }
+
+  /* ===== SECURITY BANNER ===== */
+  .security-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .security-card-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .security-card-info { display: flex; align-items: center; gap: 14px; }
+  .shield-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .shield-icon.amber { background: var(--warning-light); border: 1px solid var(--warning-border); }
+  .shield-icon.green { background: var(--success-light); border: 1px solid var(--success-border); }
+  .shield-icon.red { background: var(--danger-light); border: 1px solid var(--danger-border); }
+  .security-card-info h3 { font-size: 15px; font-weight: 600; }
+  .security-card-info p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .security-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  /* Progress segments */
+  .progress-segments {
+    display: flex; gap: 4px; margin-bottom: 16px;
+  }
+  .progress-seg {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: var(--border);
+  }
+  .progress-seg.filled { background: var(--success); }
+  .progress-seg.warning { background: var(--warning); }
+  .progress-seg.danger { background: var(--danger); }
+
+  /* Method chips in banner */
+  .method-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .method-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--bg-white);
+  }
+  .method-chip.enrolled { border-color: var(--success-border); background: var(--success-light); color: #065F46; }
+  .method-chip.warning { border-color: var(--warning-border); background: var(--warning-light); color: #92400E; }
+  .method-chip.available { border-color: var(--border); background: var(--bg); color: var(--text-muted); }
+  .method-chip.not-enrolled {
+    border-color: var(--danger-border); background: var(--danger-light); color: #B42318;
+    cursor: pointer;
+  }
+  .method-chip.not-enrolled:hover { box-shadow: 0 0 0 2px var(--danger-border); }
+  .chip-icon { width: 14px; height: 14px; }
+
+  /* ===== METHOD ROWS ===== */
+  .method-row {
+    display: flex; align-items: center;
+    padding: 14px 22px; gap: 14px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+  .method-row:hover { background: var(--bg); }
+  .method-row:last-child { border-bottom: none; }
+  .method-chevron { flex-shrink: 0; color: var(--text-placeholder); margin-left: 4px; transition: transform 0.2s; }
+  .method-icon-wrap {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: var(--bg); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--text-muted);
+  }
+  .method-icon-wrap.warning-icon { background: var(--warning-light); border-color: var(--warning-border); color: var(--warning); }
+  .method-icon-wrap.dim { opacity: 0.4; }
+  .method-info { flex: 1; min-width: 0; }
+  .method-name { font-size: 14px; font-weight: 500; }
+  .method-desc { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+  .method-status-hint { font-size: 12px; color: #92400E; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 4px; padding: 3px 8px; margin-top: 6px; display: inline-block; line-height: 1.4; }
+  .method-tech { display: none; }
+  .method-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 16px;
+    font-size: 12px; font-weight: 500;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-success { background: var(--success-light); color: #065F46; border: 1px solid var(--success-border); }
+  .badge-success .badge-dot { background: var(--success); }
+  .badge-warning { background: var(--warning-light); color: #92400E; border: 1px solid var(--warning-border); }
+  .badge-warning .badge-dot { background: var(--warning); }
+  .badge-danger { background: var(--danger-light); color: #991B1B; border: 1px solid var(--danger-border); }
+  .badge-danger .badge-dot { background: var(--danger); }
+  .badge-neutral { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+  .badge-neutral .badge-dot { background: var(--text-placeholder); }
+
+  /* Password */
+  .password-dots { letter-spacing: 2px; font-size: 14px; color: var(--text-secondary); }
+
+  /* ===== DEVICE NESTED ===== */
+  .device-nested-row {
+    display: flex; align-items: center;
+    padding: 10px 22px 10px 76px;
+    gap: 12px;
+    background: #FEFCE8;
+    border-bottom: 1px solid var(--warning-border);
+    border-left: 3px solid var(--warning);
+  }
+  .device-nested-row .device-info { flex: 1; }
+  .device-nested-row .device-name { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+  .device-nested-row .device-detail { font-size: 12px; color: var(--text-muted); }
+
+  /* Warning alert */
+  .alert-inline {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 22px 10px 76px;
+    background: var(--warning-light);
+    border-bottom: 1px solid var(--warning-border);
+    font-size: 13px; color: #92400E;
+  }
+  .alert-inline-actions { margin-left: auto; display: flex; gap: 10px; }
+
+  /* ===== SESSION TABLE ===== */
+  .session-table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    padding: 10px 22px;
+    font-size: 11px; font-weight: 600; color: var(--text-placeholder);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .session-table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    align-items: center;
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .session-table-row:hover { background: var(--bg); }
+  .session-table-row:last-child { border-bottom: none; }
+  .session-device { display: flex; align-items: center; gap: 10px; }
+  .session-device-icon { font-size: 20px; }
+  .session-device-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .session-device-os { font-size: 12px; color: var(--text-muted); }
+  .session-location { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-tertiary); }
+  .session-time { font-size: 13px; color: var(--text-muted); }
+  .session-status { }
+  .session-actions { display: flex; justify-content: flex-end; }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+  }
+  .empty-icon-wrap {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--bg); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px; color: var(--text-placeholder);
+  }
+  .empty-state h4 { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .empty-state p { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; max-width: 340px; margin-left: auto; margin-right: auto; }
+
+  /* ===== SUB SECTION HEADER ===== */
+  .sub-header {
+    padding: 12px 22px 8px;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1E293B; color: #fff;
+    padding: 12px 20px; border-radius: 10px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease; z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast-actions { display: flex; gap: 12px; margin-left: 12px; }
+  .toast-actions button { background: none; border: none; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .toast-actions .dismiss { color: #94A3B8; }
+  .toast-actions .undo { color: #60A5FA; }
+
+  /* Highlight pulse for CTA scroll target */
+  @keyframes highlightPulse {
+    0% { background: transparent; box-shadow: none; }
+    15% { background: var(--danger-light); box-shadow: 0 0 0 4px var(--danger-border); }
+    100% { background: transparent; box-shadow: none; }
+  }
+  .method-row.highlight {
+    animation: highlightPulse 2.5s ease-out;
+    border-radius: 8px;
+  }
+
+  /* ===== METHOD DETAIL PANELS ===== */
+  .method-detail {
+    display: none;
+    background: var(--bg-white);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.06);
+  }
+  .method-detail:has(.email-list),
+  .method-detail:has(.passkey-table) { padding: 0; }
+  .method-detail.open {
+    display: flex;
+    gap: 80px;
+    animation: slideDown 0.2s ease;
+  }
+  .method-detail-col { display: flex; flex-direction: column; gap: 8px; }
+  .method-detail-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #9EA1B7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .method-detail-value { font-size: 13px; color: #212533; }
+  .method-detail-table { width: 100%; border-collapse: collapse; }
+  .method-detail-table th {
+    text-align: left; font-size: 11px; font-weight: 500;
+    color: #9EA1B7; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .method-detail-table td {
+    font-size: 13px; color: #212533;
+    padding: 12px; border-bottom: 1px solid var(--border);
+  }
+  .method-detail-table .btn-icon-delete {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); padding: 4px; font-size: 16px;
+  }
+  .method-detail-table .btn-icon-delete:hover { color: var(--danger); }
+  .method-detail-footer { display: flex; justify-content: flex-end; padding: 12px 0 0; }
+  .method-row.expanded { background: #FCFCFF; }
+  .method-row.expanded .method-chevron { transform: rotate(90deg); }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== SECURITY QUESTIONS (Workforce only) ===== */
+  .workforce-only { display: none !important; }
+  body.workforce .method-row.workforce-only { display: flex !important; }
+  body.workforce .method-detail.workforce-only { display: none !important; }
+  body.workforce .method-detail.workforce-only.open { display: flex !important; }
+  .sq-helper { font-size: 12px; color: #626576; line-height: 16px; margin-bottom: 16px; }
+  .sq-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 4px;
+    padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: flex-end;
+  }
+  .sq-field { width: 100%; max-width: 500px; }
+  .sq-field-label { font-size: 12px; font-weight: 600; color: #212533; margin-bottom: 8px; }
+  .sq-field-input {
+    display: flex; align-items: center; width: 100%;
+    background: #FCFCFF; border: 1px solid #9EA1B7; border-radius: 4px;
+    padding: 12px; font-size: 14px; color: #626576; position: relative;
+  }
+  .sq-field-input input {
+    border: none; background: transparent; flex: 1; font-size: 14px; color: #626576;
+    outline: none; font-family: inherit;
+  }
+  .sq-field-input .sq-toggle-vis {
+    background: none; border: none; cursor: pointer; color: #9EA1B7; padding: 0 0 0 8px;
+    display: flex; align-items: center;
+  }
+  .sq-field-input .sq-toggle-vis:hover { color: #626576; }
+  .sq-save-btn { /* deprecated — use .modal-primary-btn */ }
+
+  /* TOTP Detail Layout */
+  #detail-totp.open { padding: 0; }
+  .totp-detail-layout {
+    display: flex; gap: 32px; padding: 24px 24px 24px 24px;
+  }
+  .totp-qr-thumb {
+    width: 160px; height: 160px; flex-shrink: 0; border-radius: 5px; cursor: pointer;
+    position: relative; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06);
+    background: #fff;
+  }
+  .totp-qr-thumb svg, .totp-qr-thumb img { width: 100%; height: 100%; display: block; transition: opacity 0.2s; }
+  .totp-qr-thumb::after {
+    content: ''; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23212533' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3Cline x1='11' y1='8' x2='11' y2='14'/%3E%3Cline x1='8' y1='11' x2='14' y2='11'/%3E%3C/svg%3E") no-repeat center center;
+    background-color: rgba(255,255,255,0.85); background-size: 32px;
+  }
+  .totp-qr-thumb:hover svg, .totp-qr-thumb:hover img { opacity: 0.4; }
+  .totp-qr-thumb:hover::after { opacity: 1; }
+  .totp-content { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 160px; }
+  .totp-content-title { font-size: 14px; font-weight: 700; color: #212533; margin: 0 0 8px 0; }
+  .totp-content-desc { font-size: 12px; color: #626576; line-height: 1.5; margin: 0 0 16px 0; }
+  .totp-manual-hint { font-size: 12px; color: #535862; margin: 0 0 8px 0; }
+  .totp-key-box {
+    display: flex; width: 330px; max-width: 100%; background: #FBFCFD;
+    border: 1px solid #CECECE; border-radius: 4px; overflow: hidden;
+  }
+  .totp-key-value {
+    flex: 1; font-size: 12px; font-weight: 600; color: #0D1F32; padding: 8px 12px;
+    border: none; background: transparent; outline: none; font-family: inherit;
+  }
+  .totp-key-copy {
+    width: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    border: none; border-left: 1px solid #CECECE; background: transparent; cursor: pointer;
+    color: #626576; transition: background 0.15s, color 0.15s;
+  }
+  .totp-key-copy:hover { background: #F0F1F3; color: #212533; }
+
+  /* TOTP Modal */
+  .totp-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .totp-modal-backdrop.open { display: flex; }
+  .totp-modal {
+    background: #fff; border-radius: 4px; width: 90%; max-width: 584px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15); animation: modalIn 0.25s ease;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .totp-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; padding: 0 24px; background: #F6F7F8; border-radius: 4px 4px 0 0;
+  }
+  .totp-modal-header h3 { font-size: 16px; font-weight: 600; color: #212533; margin: 0; }
+  .totp-modal-close {
+    width: 32px; height: 32px; border: none; background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; border-radius: 4px;
+    color: #626576; transition: background 0.15s;
+  }
+  .totp-modal-close:hover { background: #E8E9EB; }
+  .totp-modal-body { padding: 24px 32px; display: flex; flex-direction: column; align-items: center; }
+  .totp-modal-desc { font-size: 12px; color: #626576; text-align: center; max-width: 500px; margin: 0 0 24px 0; line-height: 1.5; }
+  .totp-modal-qr-wrapper {
+    background: #FAFAFA; border: 1px solid #F2F3F4; border-radius: 8px 8px 0 0;
+    padding: 24px; width: 100%; display: flex; justify-content: center;
+  }
+  .totp-modal-qr-wrapper svg, .totp-modal-qr-wrapper img {
+    width: 330px; height: 330px; border-radius: 13px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .totp-modal-key-section {
+    background: #fff; border: 1px solid #F2F3F4; border-top: none;
+    border-radius: 0 0 4px 4px; padding: 24px; width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .totp-modal-manual-hint { font-size: 12px; color: #535862; margin: 0 0 12px 0; text-align: center; }
+
+  /* SQ Modal */
+  .sq-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .sq-modal-backdrop.open { display: flex; }
+  .sq-modal {
+    background: #fff; border-radius: 8px; width: 100%; max-width: 560px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    animation: modalIn 0.2s ease;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .sq-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 0; margin-bottom: 4px;
+  }
+  .sq-modal-header h3 { font-size: 16px; font-weight: 600; color: #212533; margin: 0; }
+  .sq-modal-close {
+    background: none; border: none; cursor: pointer; color: #9EA1B7;
+    padding: 4px; display: flex; align-items: center; border-radius: 4px;
+  }
+  .sq-modal-close:hover { background: #f0f0f3; color: #626576; }
+  .sq-modal-body { padding: 16px 24px 24px; }
+  .sq-modal-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+    padding: 0 32px 32px;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ===== PASSKEY TABLE ===== */
+  .passkey-table { width: 100%; }
+  .passkey-table-header {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.8fr 2.2fr 48px;
+    padding: 10px 22px;
+    font-size: 11px; font-weight: 600; color: var(--text-placeholder);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .passkey-table-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.8fr 2.2fr 48px;
+    align-items: center;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .passkey-table-row:hover { background: var(--bg); }
+  .passkey-name { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .passkey-created { font-size: 13px; color: var(--text-tertiary); }
+  .passkey-time { font-size: 12px; color: var(--text-muted); }
+  .passkey-cred-id { font-size: 12px; color: var(--text-muted); font-family: 'SF Mono', 'Fira Code', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .passkey-aaguid { font-size: 12px; color: var(--text-muted); font-family: 'SF Mono', 'Fira Code', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .passkey-actions { display: flex; justify-content: flex-end; }
+  .btn-icon-danger {
+    background: none; border: none; cursor: pointer; padding: 6px; border-radius: var(--radius-sm);
+    color: var(--text-muted); transition: all 0.15s;
+  }
+  .btn-icon-danger:hover { color: var(--danger); background: var(--danger-light); }
+  .passkey-table-footer {
+    display: flex; justify-content: flex-end; align-items: center;
+    padding: 12px 22px; gap: 12px;
+  }
+
+  /* ===== EMAIL OTP LIST ===== */
+  .email-list { width: 100%; }
+  .email-list-header {
+    display: grid; grid-template-columns: 2.5fr 1.5fr 1fr 48px;
+    padding: 10px 22px; font-size: 11px; font-weight: 600; color: var(--text-placeholder);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border); background: var(--bg);
+  }
+  .email-list-row {
+    display: grid; grid-template-columns: 2.5fr 1.5fr 1fr 48px;
+    align-items: center; padding: 14px 22px;
+    border-bottom: 1px solid var(--border); transition: background 0.1s;
+  }
+  .email-list-row:hover { background: var(--bg); }
+  .email-addr { font-size: 13px; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+  .email-date { font-size: 13px; color: var(--text-tertiary); }
+  .email-status { display: flex; align-items: center; }
+  .badge-primary-sm {
+    font-size: 11px; font-weight: 600; color: var(--primary); background: #EFF6FF;
+    border: 1px solid #BFDBFE; border-radius: 4px; padding: 2px 8px; white-space: nowrap;
+  }
+  .email-actions { display: flex; justify-content: flex-end; }
+
+  /* ===== PASSKEY MODAL ===== */
+  .pk-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .pk-modal-backdrop.open { display: flex; }
+  .pk-modal {
+    background: #fff; border-radius: 8px; width: 100%; max-width: 520px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    animation: modalIn 0.2s ease;
+  }
+  .pk-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 0;
+  }
+  .pk-modal-header h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0; }
+  .pk-modal-close {
+    background: none; border: none; cursor: pointer; color: #9EA1B7;
+    padding: 4px; display: flex; align-items: center; border-radius: 4px;
+  }
+  .pk-modal-close:hover { background: #f0f0f3; color: #626576; }
+  .pk-modal-body { padding: 16px 24px 8px; }
+  .pk-modal-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 20px 0; }
+  .pk-field { margin-bottom: 20px; }
+  .pk-field-label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.4; }
+  .pk-field-input {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 14px; font-family: inherit;
+    color: var(--text-primary); transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+  }
+  .pk-field-input:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  .pk-field-input::placeholder { color: var(--text-placeholder); }
+  .pk-toggle-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; margin-bottom: 4px;
+  }
+  .pk-toggle-icon { flex-shrink: 0; display: flex; align-items: center; }
+  .pk-toggle-label { flex: 1; font-size: 13px; color: var(--text-secondary); }
+  .pk-switch {
+    position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0;
+  }
+  .pk-switch input { opacity: 0; width: 0; height: 0; }
+  .pk-slider {
+    position: absolute; cursor: pointer; inset: 0; background: #D1D5DB;
+    border-radius: 11px; transition: background 0.2s;
+  }
+  .pk-slider::before {
+    content: ""; position: absolute; height: 18px; width: 18px;
+    left: 2px; bottom: 2px; background: white; border-radius: 50%;
+    transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .pk-switch input:checked + .pk-slider { background: var(--primary); }
+  .pk-switch input:checked + .pk-slider::before { transform: translateX(18px); }
+  .pk-modal-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+    padding: 0 32px 32px;
+  }
+
+  /* ===== UNIFIED MODAL BUTTONS ===== */
+  .modal-cancel-btn {
+    border: none; background: transparent; color: #196CD6; font-size: 14px;
+    cursor: pointer; padding: 8px 16px; font-family: inherit; border-radius: 4px;
+    transition: background 0.15s; white-space: nowrap;
+  }
+  .modal-cancel-btn:hover { background: #F0F4FF; }
+  .modal-primary-btn {
+    background: #196CD6; color: #fff; border: none; font-size: 14px;
+    padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit;
+    transition: background 0.15s; white-space: nowrap;
+  }
+  .modal-primary-btn:hover { background: #1560BE; }
+
+  /* Legacy aliases */
+  .btn-primary { padding: 8px 20px; font-size: 13px; font-weight: 500; border: none; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; background: var(--primary); color: white; transition: background 0.15s; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-secondary { border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 4px; padding: 8px 16px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .btn-secondary:hover { background: #f5f5f5; }
+
+  /* ===== CHANGE PASSWORD MODAL ===== */
+  .pw-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .pw-modal-backdrop.open { display: flex; }
+  .pw-modal {
+    background: #fff; border-radius: 4px; width: 90%; max-width: 584px;
+    box-shadow: 0 4.4px 21.7px rgba(24,39,75,0.14), 0 2px 6.9px rgba(24,39,75,0.12);
+    animation: modalIn 0.25s ease;
+  }
+  .pw-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; padding: 0 32px; background: #F6F7F8; border-radius: 4px 4px 0 0;
+  }
+  .pw-modal-header h3 { font-size: 16px; font-weight: 600; color: #212533; margin: 0; letter-spacing: -0.32px; }
+  .pw-modal-close {
+    width: 32px; height: 32px; border: none; background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; border-radius: 4px;
+    color: #626576; transition: background 0.15s;
+  }
+  .pw-modal-close:hover { background: #E8E9EB; }
+  .pw-modal-body { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+  .pw-modal-desc { font-size: 14px; color: #212533; line-height: 20px; margin: 0; }
+  .pw-field { display: flex; flex-direction: column; gap: 8px; }
+  .pw-field-label { font-size: 12px; font-weight: 600; color: #212533; line-height: 16px; }
+  .pw-field-wrap {
+    position: relative; display: flex; align-items: center;
+    border: 1px solid #9EA1B7; border-radius: 4px; background: #FCFCFF;
+    height: 48px; transition: border-color 0.15s;
+  }
+  .pw-field-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(25,108,214,0.15); }
+  .pw-field-input {
+    flex: 1; border: none; background: transparent; padding: 0 12px;
+    font-size: 14px; color: #212533; font-family: inherit; outline: none;
+    height: 100%; line-height: 48px;
+  }
+  .pw-field-input::placeholder { color: #626576; }
+  .pw-eye-btn {
+    width: 40px; height: 100%; border: none; background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: #9EA1B7;
+    transition: color 0.15s; flex-shrink: 0;
+  }
+  .pw-eye-btn:hover { color: #626576; }
+  .pw-strength {
+    display: flex; gap: 8px; margin-top: 4px;
+  }
+  .pw-strength-bar {
+    flex: 1; height: 3px; border-radius: 2px; background: #E9EBEC;
+    transition: background 0.3s;
+  }
+  .pw-strength-bar.active { background: #CF3228; }
+  .pw-strength-bar.medium { background: #F59E0B; }
+  .pw-strength-bar.strong { background: #12B76A; }
+  .pw-modal-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+    padding: 0 32px 32px;
+  }
+  /* pw-cancel-btn & pw-create-btn replaced by .modal-cancel-btn & .modal-primary-btn */
+
+  /* ===== EMAIL OTP MODAL ===== */
+  .em-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .em-modal-backdrop.open { display: flex; }
+  .em-modal {
+    background: #fff; border-radius: 4px; width: 90%; max-width: 520px;
+    box-shadow: 0 4.4px 21.7px rgba(24,39,75,0.14), 0 2px 6.9px rgba(24,39,75,0.12);
+    animation: modalIn 0.25s ease;
+  }
+  .em-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; padding: 0 32px; background: #F6F7F8; border-radius: 4px 4px 0 0;
+  }
+  .em-modal-header h3 { font-size: 16px; font-weight: 600; color: #212533; margin: 0; letter-spacing: -0.32px; }
+  .em-modal-close {
+    width: 32px; height: 32px; border: none; background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; border-radius: 4px;
+    color: #626576; transition: background 0.15s;
+  }
+  .em-modal-close:hover { background: #E8E9EB; }
+  .em-modal-body { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+  .em-modal-desc { font-size: 14px; color: #212533; line-height: 20px; margin: 0; }
+  .em-field { display: flex; flex-direction: column; gap: 8px; }
+  .em-field-label { font-size: 12px; font-weight: 600; color: #212533; line-height: 16px; }
+  .em-field-wrap {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .em-field-input {
+    flex: 1; border: 1px solid #9EA1B7; border-radius: 4px; background: #FCFCFF;
+    padding: 0 12px; font-size: 14px; color: #212533; font-family: inherit; outline: none;
+    height: 48px; line-height: 48px; transition: border-color 0.15s;
+  }
+  .em-field-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(25,108,214,0.15); }
+  .em-field-input::placeholder { color: #9EA1B7; }
+  .em-send-btn {
+    background: var(--primary); color: #fff; border: none; font-size: 13px; font-weight: 500;
+    padding: 0 20px; height: 48px; border-radius: 4px; cursor: pointer; font-family: inherit;
+    white-space: nowrap; transition: background 0.15s; flex-shrink: 0;
+  }
+  .em-send-btn:hover { background: #1560BE; }
+  .em-send-btn:disabled { background: #9EA1B7; cursor: not-allowed; }
+  .em-verify-section { display: none; flex-direction: column; gap: 16px; }
+  .em-verify-section.visible { display: flex; }
+  .em-verify-msg {
+    font-size: 13px; color: #626576; line-height: 1.5; margin: 0;
+    padding: 12px 16px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px;
+  }
+  .em-verify-msg svg { vertical-align: middle; margin-right: 6px; }
+  .em-otp-row { display: flex; gap: 8px; justify-content: center; }
+  .em-otp-input {
+    width: 48px; height: 56px; border: 1px solid #9EA1B7; border-radius: 4px;
+    background: #FCFCFF; font-size: 24px; font-weight: 600; color: #212533;
+    text-align: center; font-family: inherit; outline: none; transition: border-color 0.15s;
+  }
+  .em-otp-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(25,108,214,0.15); }
+  .em-resend { font-size: 13px; color: #626576; text-align: center; margin: 0; }
+  .em-resend a { color: var(--primary); text-decoration: none; cursor: pointer; font-weight: 500; }
+  .em-resend a:hover { text-decoration: underline; }
+  .em-modal-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 16px;
+    padding: 0 32px 32px;
+  }
+
+  /* SMS OTP Modal — reuses em-modal structure */
+  .sms-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .sms-modal-backdrop.open { display: flex; }
+  .sms-phone-wrap { display: flex; gap: 8px; }
+  .sms-country-select {
+    width: 90px; height: 48px; border: 1px solid #9EA1B7; border-radius: 4px;
+    background: #FCFCFF; font-size: 14px; color: #212533; font-family: inherit;
+    padding: 0 8px; cursor: pointer; outline: none; flex-shrink: 0;
+  }
+  .sms-country-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(25,108,214,0.15); }
+
+  /* Workstation Pair Modal */
+  .ws-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .ws-modal-backdrop.open { display: flex; }
+  .ws-content-row {
+    display: flex; align-items: center; gap: 30px;
+  }
+  .ws-icon-pill {
+    width: 64px; height: 64px; border-radius: 39px; flex-shrink: 0;
+    background: linear-gradient(to top, #EFF1F9, #FFFFFF);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .ws-icon-pill svg { color: #9EA1B7; }
+  .ws-cursor-badge {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 20px; height: 20px; transform: rotate(-42deg);
+    color: #9EA1B7;
+  }
+  .ws-text-col { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .ws-text-main { font-size: 12px; color: #626576; line-height: 16px; margin: 0; }
+  .ws-text-note { font-size: 10px; color: #626576; line-height: 12px; margin: 0; }
+  .ws-text-note .ws-highlight { color: #EAB344; }
+  .ws-pair-btn { /* deprecated — use .modal-primary-btn */ }
+
+  /* Paired workstation list */
+  .ws-paired-list { display: none; width: 100%; }
+  .ws-paired-list.visible { display: block; }
+
+  /* ===== DEVICE PAIR MODAL ===== */
+  .dp-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .dp-modal-backdrop.open { display: flex; }
+  .dp-desc {
+    font-size: 12px; color: #626576; text-align: center; line-height: 16px;
+    padding: 12px 10px; margin: 0;
+  }
+  .dp-qr-wrapper {
+    background: #FAFAFA; border: 1px solid #F2F3F4; border-radius: 8px;
+    padding: 24px; display: flex; flex-direction: column; align-items: center;
+    width: 100%;
+  }
+  .dp-qr-code {
+    width: 241px; height: 241px; border-radius: 8px; background: #fff;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.1), 0 13px 13px rgba(0,0,0,0.09),
+                0 28px 17px rgba(0,0,0,0.05), 0 50px 20px rgba(0,0,0,0.01);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .dp-qr-code svg { width: 100%; height: 100%; }
+  .dp-store-links {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    padding: 20px 0 8px;
+  }
+  .dp-store-links a {
+    display: inline-flex; height: 40px; border-radius: 8px; overflow: hidden;
+    transition: opacity 0.15s;
+  }
+  .dp-store-links a:hover { opacity: 0.8; }
+  .dp-store-links a img, .dp-store-links a svg { height: 40px; width: auto; }
+  .dp-waiting {
+    display: none; align-items: center; gap: 8px; justify-content: center;
+    padding: 12px 0 0; font-size: 12px; color: #626576;
+  }
+  .dp-waiting.visible { display: flex; }
+  .dp-spinner {
+    width: 16px; height: 16px; border: 2px solid #E8E9EB; border-top-color: #196CD6;
+    border-radius: 50%; animation: dpSpin 0.8s linear infinite;
+  }
+  @keyframes dpSpin { to { transform: rotate(360deg); } }
+
+  /* ===== RESET DEVICE MODAL ===== */
+  .dp-reset-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .dp-reset-backdrop.open { display: flex; }
+  .dp-reset-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 32px; background: #FFF8F7; border-bottom: 1px solid #FFE2E1;
+    border-radius: 4px 4px 0 0;
+  }
+  .dp-reset-header h3 {
+    font-size: 16px; font-weight: 600; color: #212533; margin: 0;
+    letter-spacing: -0.32px;
+  }
+  .dp-reset-icon {
+    width: 32px; height: 32px; border-radius: 50%; background: #FEE2E2;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .dp-reset-icon svg { width: 16px; height: 16px; color: #DC2626; }
+  .dp-reset-body {
+    padding: 24px 32px 32px; font-size: 14px; color: #212533; line-height: 20px;
+  }
+  .dp-reset-body p { margin: 0; }
+  .modal-cancel-btn-dark {
+    border: none; background: transparent; color: #212533; font-size: 14px;
+    cursor: pointer; padding: 8px 16px; font-family: inherit; border-radius: 4px;
+    transition: background 0.15s; white-space: nowrap;
+  }
+  .modal-cancel-btn-dark:hover { background: #F0F0F3; }
+  .modal-danger-btn {
+    background: #CF3228; color: #fff; border: 1px solid #CF3228; font-size: 14px;
+    padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit;
+    transition: background 0.15s; white-space: nowrap;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.31);
+  }
+  .modal-danger-btn:hover { background: #B42318; }
+
+  /* Device list in mobile app card */
+  .dp-device-list { width: 100%; }
+  .dp-reset-link {
+    display: flex; justify-content: flex-end; padding: 8px 22px 14px;
+  }
+  .dp-reset-link a {
+    color: #CF3228; font-size: 13px; font-weight: 500; cursor: pointer;
+    text-decoration: none; font-family: inherit;
+  }
+  .dp-reset-link a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- GLOBAL HEADER -->
+<header class="global-header">
+  <div class="global-header-logo">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="14" stroke="#FFFFFF" stroke-width="2"/>
+      <path d="M11 17.5C11 14.5 13 11 16 9c3 2 5 5.5 5 8.5 0 2.5-2 4.5-5 4.5s-5-2-5-4.5z" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M16 9v13" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span>SecureAuth</span>
+  </div>
+  <div class="global-header-right">
+    <div class="header-avatar">HE</div>
+  </div>
+</header>
+
+<!-- LEFT NAV -->
+<nav class="nav">
+  <div class="nav-items">
+    <a class="nav-item" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/><rect x="12" y="12" width="7" height="7" rx="1.5"/></svg>
+      Application
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="8" r="3.5"/><path d="M4.5 19c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg>
+      Profile
+    </a>
+    <a class="nav-item active" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="12" height="9" rx="2"/><path d="M7.5 10V7a3.5 3.5 0 017 0v3"/></svg>
+      Security
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">Security</span>
+    </div>
+    <div class="topbar-right">
+      <button class="mode-toggle" id="modeToggle" onclick="toggleMode()">
+        <span id="modeLabel">CIAM</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>Security</h1>
+      <p>Manage your sign-in methods, sessions, and account protection</p>
+    </div>
+
+    <!-- ===== ACCOUNT PROTECTION CARD ===== -->
+    <div class="security-card" id="securityBanner">
+      <div class="security-card-top">
+        <div class="security-card-info">
+          <div class="shield-icon amber">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l7 3.5v4.5c0 5-3 9.5-7 11-4-1.5-7-6-7-11V5.5L11 2z"/><path d="M11 8v3M11 14h.01"/></svg>
+          </div>
+          <div>
+            <h3>Recommended: add a backup method</h3>
+            <p>4 of 7 available methods are set up. Adding a backup improves account recovery.</p>
+          </div>
+        </div>
+        <div class="security-card-actions">
+          <button class="btn" onclick="dismissBanner()">Dismiss</button>
+          <button class="btn btn-primary" onclick="improveSecurity()">Improve security</button>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-segments">
+        <div class="progress-seg filled"></div>
+        <div class="progress-seg filled"></div>
+        <div class="progress-seg filled"></div>
+        <div class="progress-seg filled"></div>
+        <div class="progress-seg danger"></div>
+        <div class="progress-seg danger"></div>
+        <div class="progress-seg danger"></div>
+      </div>
+
+      <!-- Method chips -->
+      <div class="method-chips">
+        <span class="method-chip enrolled" data-method="method-password">
+          <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+          <span data-ciam="Password" data-workforce="Password">Password</span>
+        </span>
+        <span class="method-chip enrolled" data-method="method-totp">
+          <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+          <span data-ciam="TOTP" data-workforce="TOTP">TOTP</span>
+        </span>
+        <span class="method-chip not-enrolled" onclick="scrollToMethod('method-symbol')" data-method="method-symbol">
+          <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5.5 5.5l3 3M8.5 5.5l-3 3"/></svg>
+          <span data-ciam="Symbol" data-workforce="Symbol">Symbol</span>
+        </span>
+        <span class="method-chip not-enrolled" onclick="scrollToMethod('method-push')" data-method="method-push">
+          <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5.5 5.5l3 3M8.5 5.5l-3 3"/></svg>
+          <span data-ciam="Push" data-workforce="Push">Push</span>
+        </span>
+        <span class="method-chip enrolled" data-method="method-email">
+          <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+          <span data-ciam="Email OTP" data-workforce="Email OTP">Email OTP</span>
+        </span>
+        <span class="method-chip enrolled" data-method="method-sms">
+          <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+          <span data-ciam="SMS OTP" data-workforce="SMS OTP">SMS OTP</span>
+        </span>
+        <span class="method-chip not-enrolled" onclick="scrollToMethod('method-passkey')" data-method="method-passkey">
+          <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5.5 5.5l3 3M8.5 5.5l-3 3"/></svg>
+          <span data-ciam="Passkey" data-workforce="Passkey">Passkey</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- ===== SIGN-IN METHODS ===== -->
+    <div class="card" id="verifyMethods">
+      <div class="card-header" onclick="toggleCard('verifyMethods')">
+        <div class="card-header-left">
+          <div class="card-header-icon" style="background:var(--primary-light);border:1px solid var(--primary-border);">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2l5.5 3v3.5c0 3.8-2.3 7.4-5.5 8.5-3.2-1.1-5.5-4.7-5.5-8.5V5L9 2z"/><path d="M7 9l1.5 1.5L11 7.5"/></svg>
+          </div>
+          <div>
+            <h2>Sign In methods</h2>
+            <div class="subtitle">Set up and manage sign-in methods</div>
+          </div>
+          <span class="card-count">4 enrolled</span>
+        </div>
+        <div class="card-header-right">
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Password -->
+        <div class="method-row" id="method-password" onclick="toggleDetail('detail-password')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="10" height="7" rx="1.5"/><path d="M6 8V5.5a3 3 0 016 0V8"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Password" data-workforce="Password">Password</div>
+            <div class="method-desc">Your primary credentials for signing in</div>
+          </div>
+          <div class="method-right">
+            <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation(); openPasswordModal();">Change</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-password">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Last updated</span>
+            <span class="method-detail-value">Sep 18, 2025, 14:34:43</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Expires</span>
+            <span class="method-detail-value">Never</span>
+          </div>
+        </div>
+
+        <!-- TOTP -->
+        <div class="method-row" id="method-totp" onclick="toggleDetail('detail-totp')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="12" height="12" rx="2"/><path d="M9 6v3l2 1"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="TOTP" data-workforce="TOTP">TOTP</div>
+            <div class="method-tech">TOTP</div>
+            <div class="method-desc">Time-based codes from SecureAuth Authenticate or Google Authenticator</div>
+          </div>
+          <div class="method-right">
+            <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation(); addNewTotp();">+ Add</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-totp">
+          <div class="totp-detail-layout">
+            <div class="totp-qr-thumb" onclick="event.stopPropagation(); openTotpModal();" title="Click to enlarge">
+              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="200" fill="#fff"/>
+                <rect x="16" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+                <rect x="22" y="22" width="36" height="36" rx="2" fill="#fff"/>
+                <rect x="28" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+                <rect x="136" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+                <rect x="142" y="22" width="36" height="36" rx="2" fill="#fff"/>
+                <rect x="148" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+                <rect x="16" y="136" width="48" height="48" rx="4" fill="#0D1F32"/>
+                <rect x="22" y="142" width="36" height="36" rx="2" fill="#fff"/>
+                <rect x="28" y="148" width="24" height="24" rx="2" fill="#0D1F32"/>
+                <rect x="72" y="16" width="8" height="8" fill="#0D1F32"/><rect x="88" y="16" width="8" height="8" fill="#0D1F32"/>
+                <rect x="104" y="16" width="8" height="8" fill="#0D1F32"/><rect x="72" y="32" width="8" height="8" fill="#0D1F32"/>
+                <rect x="96" y="32" width="8" height="8" fill="#0D1F32"/><rect x="112" y="32" width="8" height="8" fill="#0D1F32"/>
+                <rect x="80" y="48" width="8" height="8" fill="#0D1F32"/><rect x="104" y="48" width="8" height="8" fill="#0D1F32"/>
+                <rect x="72" y="72" width="8" height="8" fill="#0D1F32"/><rect x="88" y="72" width="8" height="8" fill="#0D1F32"/>
+                <rect x="112" y="72" width="8" height="8" fill="#0D1F32"/><rect x="136" y="72" width="8" height="8" fill="#0D1F32"/>
+                <rect x="160" y="72" width="8" height="8" fill="#0D1F32"/><rect x="16" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="40" y="80" width="8" height="8" fill="#0D1F32"/><rect x="80" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="104" y="80" width="8" height="8" fill="#0D1F32"/><rect x="128" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="152" y="80" width="8" height="8" fill="#0D1F32"/><rect x="176" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="24" y="96" width="8" height="8" fill="#0D1F32"/><rect x="48" y="96" width="8" height="8" fill="#0D1F32"/>
+                <rect x="72" y="96" width="8" height="8" fill="#0D1F32"/><rect x="96" y="96" width="8" height="8" fill="#0D1F32"/>
+                <rect x="120" y="96" width="8" height="8" fill="#0D1F32"/><rect x="144" y="96" width="8" height="8" fill="#0D1F32"/>
+                <rect x="168" y="96" width="8" height="8" fill="#0D1F32"/><rect x="16" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="40" y="112" width="8" height="8" fill="#0D1F32"/><rect x="56" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="88" y="112" width="8" height="8" fill="#0D1F32"/><rect x="120" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="152" y="112" width="8" height="8" fill="#0D1F32"/><rect x="176" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="72" y="128" width="8" height="8" fill="#0D1F32"/><rect x="96" y="128" width="8" height="8" fill="#0D1F32"/>
+                <rect x="120" y="128" width="8" height="8" fill="#0D1F32"/><rect x="144" y="128" width="8" height="8" fill="#0D1F32"/>
+                <rect x="168" y="128" width="8" height="8" fill="#0D1F32"/><rect x="80" y="144" width="8" height="8" fill="#0D1F32"/>
+                <rect x="104" y="144" width="8" height="8" fill="#0D1F32"/><rect x="136" y="144" width="8" height="8" fill="#0D1F32"/>
+                <rect x="160" y="144" width="8" height="8" fill="#0D1F32"/><rect x="72" y="160" width="8" height="8" fill="#0D1F32"/>
+                <rect x="96" y="160" width="8" height="8" fill="#0D1F32"/><rect x="112" y="160" width="8" height="8" fill="#0D1F32"/>
+                <rect x="144" y="160" width="8" height="8" fill="#0D1F32"/><rect x="176" y="160" width="8" height="8" fill="#0D1F32"/>
+                <rect x="80" y="176" width="8" height="8" fill="#0D1F32"/><rect x="104" y="176" width="8" height="8" fill="#0D1F32"/>
+                <rect x="128" y="176" width="8" height="8" fill="#0D1F32"/><rect x="152" y="176" width="8" height="8" fill="#0D1F32"/>
+              </svg>
+            </div>
+            <div class="totp-content">
+              <div>
+                <h4 class="totp-content-title">Use an authenticator app to scan</h4>
+                <p class="totp-content-desc">Scan this QR code with any authenticator app (like SecureAuth Authenticate or Google Authenticator) to generate time-based one-time passcodes (TOTP).</p>
+              </div>
+              <div>
+                <p class="totp-manual-hint">Can't scan the code? Enter the key manually.</p>
+                <div class="totp-key-box">
+                  <input class="totp-key-value" type="text" readonly value="QSXHYNVN6IXWJMDFHRE5S2JCMHTG7GLE"/>
+                  <button class="totp-key-copy" onclick="event.stopPropagation(); copyTotpKey(this);" title="Copy key">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Symbol -->
+        <div class="method-row" id="method-symbol" onclick="toggleDetail('detail-symbol')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="6"/><circle cx="9" cy="9" r="1.5"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Symbol" data-workforce="Symbol">Symbol</div>
+            <div class="method-tech">SYMBOL</div>
+            <div class="method-desc">Match a symbol on your phone to approve sign-in</div>
+          </div>
+          <div class="method-right">
+            <span class="method-status-hint">Register mobile device to enable</span>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-symbol">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Name</span>
+            <span class="method-detail-value">iPhone 12 Pro iOS 11.5</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Access date</span>
+            <span class="method-detail-value">January 12 at 4:29 PM</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Status</span>
+            <span class="badge badge-danger"><span class="badge-dot"></span> Failed</span>
+          </div>
+        </div>
+
+        <!-- Push -->
+        <div class="method-row" id="method-push" onclick="toggleDetail('detail-push')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2H7a2 2 0 00-2 2v10a2 2 0 002 2h4a2 2 0 002-2V4a2 2 0 00-2-2z"/><path d="M9 13h.01"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Push" data-workforce="Push">Push</div>
+            <div class="method-tech">PUSH</div>
+            <div class="method-desc">Approve sign-ins from the SecureAuth Authenticate mobile app</div>
+          </div>
+          <div class="method-right">
+            <span class="method-status-hint">Register mobile device to enable</span>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-push">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Name</span>
+            <span class="method-detail-value">iPhone 12 Pro iOS 11.5</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Access date</span>
+            <span class="method-detail-value">January 12 at 4:02 PM</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Status</span>
+            <span class="badge badge-danger"><span class="badge-dot"></span> Failed</span>
+          </div>
+        </div>
+
+        <!-- Email OTP -->
+        <div class="method-row" id="method-email" onclick="toggleDetail('detail-email')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="14" height="10" rx="1.5"/><path d="M2 4l7 5 7-5"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Email OTP" data-workforce="Email OTP">Email OTP</div>
+            <div class="method-tech">EMAIL OTP</div>
+            <div class="method-desc">Receive an OTP for your verified email address</div>
+          </div>
+          <div class="method-right">
+            <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation(); openEmailOtpModal();">+ Add</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-email">
+          <div class="email-list">
+            <div class="email-list-header">
+              <span>Email address</span><span>Added</span><span>Status</span><span></span>
+            </div>
+            <div class="email-list-row" id="email-row-1">
+              <div class="email-addr">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M2 3.5l6 4.5 6-4.5"/></svg>
+                <span>henry.edwards@company.com</span>
+              </div>
+              <div class="email-date">Sep 18, 2025</div>
+              <div class="email-status"><span class="badge-primary-sm">Primary</span></div>
+              <div class="email-actions"></div>
+            </div>
+            <div class="email-list-row" id="email-row-2">
+              <div class="email-addr">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M2 3.5l6 4.5 6-4.5"/></svg>
+                <span>h.edwards@gmail.com</span>
+              </div>
+              <div class="email-date">Jan 12, 2026</div>
+              <div class="email-status"></div>
+              <div class="email-actions">
+                <button class="btn-icon-danger" onclick="event.stopPropagation(); deleteEmailOtp('email-row-2', 'h.edwards@gmail.com');" title="Delete">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1M5 4v8.5a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SMS OTP -->
+        <div class="method-row" id="method-sms" onclick="toggleDetail('detail-sms')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="8" height="14" rx="1.5"/><line x1="9" y1="13" x2="9" y2="13.01"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="SMS OTP" data-workforce="SMS OTP">SMS OTP</div>
+            <div class="method-tech">SMS OTP</div>
+            <div class="method-desc">Receive an OTP for your verified mobile address</div>
+          </div>
+          <div class="method-right">
+            <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation(); openSmsOtpModal();">+ Add</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-sms">
+          <div class="email-list">
+            <div class="email-list-header">
+              <span>Phone number</span><span>Added</span><span>Status</span><span></span>
+            </div>
+            <div class="email-list-row" id="sms-row-1">
+              <div class="email-addr">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><line x1="8" y1="12" x2="8" y2="12.01" stroke-width="1.5"/></svg>
+                <span>+1 (•••) •••-4829</span>
+              </div>
+              <div class="email-date">Jan 12, 2025</div>
+              <div class="email-status"><span class="badge-primary-sm">Primary</span></div>
+              <div class="email-actions"></div>
+            </div>
+            <div class="email-list-row" id="sms-row-2">
+              <div class="email-addr">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><line x1="8" y1="12" x2="8" y2="12.01" stroke-width="1.5"/></svg>
+                <span>+1 (•••) •••-7153</span>
+              </div>
+              <div class="email-date">Oct 05, 2025</div>
+              <div class="email-status"></div>
+              <div class="email-actions">
+                <button class="btn-icon-danger" onclick="event.stopPropagation(); deleteSmsOtp('sms-row-2', '+1 (•••) •••-7153');" title="Delete">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1M5 4v8.5a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passkey -->
+        <div class="method-row" id="method-passkey" onclick="toggleDetail('detail-passkey')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M12 10l2 5.5-1.8-.9-1.8.9-.5-2.7"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Passkey" data-workforce="Passkey">Passkey</div>
+            <div class="method-tech">FIDO2 / PASSKEY</div>
+            <div class="method-desc">Phishing-resistant sign-in using biometrics or security keys</div>
+          </div>
+          <div class="method-right">
+            <span class="badge badge-success"><span class="badge-dot"></span> 2 registered</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation(); openPasskeyModal();">+ Add</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="method-detail" id="detail-passkey">
+          <div class="passkey-table">
+            <div class="passkey-table-header">
+              <span>Name</span>
+              <span>Created</span>
+              <span>Credentials ID</span>
+              <span>Authenticator Attestation GUID</span>
+              <span></span>
+            </div>
+            <div class="passkey-table-row" id="passkey-row-1">
+              <div class="passkey-name">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#2563EB" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M12 10l2 5.5-1.8-.9-1.8.9-.5-2.7"/></svg>
+                <span>iOS 16 iPhone</span>
+              </div>
+              <div class="passkey-created">
+                <div>May 06 2025</div>
+                <div class="passkey-time">11:40 PM</div>
+              </div>
+              <div class="passkey-cred-id" title="U4_DehiSM235OrSuk-23_DIRnl">U4_DehiSM235OrSuk-23_DI...</div>
+              <div class="passkey-aaguid" title="bada5566-a7aa-401f-4519adsfg">bada5566-a7aa-401f-4519adsfg</div>
+              <div class="passkey-actions">
+                <button class="btn-icon-danger" onclick="event.stopPropagation(); deletePasskey('passkey-row-1', 'iOS 16 iPhone');" title="Delete passkey">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="passkey-table-row" id="passkey-row-2">
+              <div class="passkey-name">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#2563EB" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M12 10l2 5.5-1.8-.9-1.8.9-.5-2.7"/></svg>
+                <span>Google Passkey</span>
+              </div>
+              <div class="passkey-created">
+                <div>May 04 2025</div>
+                <div class="passkey-time">12:40 PM</div>
+              </div>
+              <div class="passkey-cred-id" title="X9_AlphaQW123Zeta-45_DIRnl">X9_AlphaQW123Zeta-45_DIRnl</div>
+              <div class="passkey-aaguid" title="f3b2c1e5-8d4a-4f9b-9c5e-8f3d1a4e2a7f">f3b2c1e5-8d4a-4f9b-9c5e...</div>
+              <div class="passkey-actions">
+                <button class="btn-icon-danger" onclick="event.stopPropagation(); deletePasskey('passkey-row-2', 'Google Passkey');" title="Delete passkey">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="passkey-table-footer">
+              <button class="btn btn-sm btn-danger-text" onclick="event.stopPropagation(); resetAllPasskeys();">Reset all</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Questions (Workforce only) -->
+        <div class="method-row workforce-only" id="method-security-q" onclick="toggleDetail('detail-security-q')">
+          <div class="method-icon-wrap">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="7"/><path d="M6.75 7.2a2.25 2.25 0 0 1 4.28.9c0 1.35-2.03 1.8-2.03 2.7"/><circle cx="9" cy="13" r="0.45" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name">Security questions</div>
+            <div class="method-desc">Answer personal questions as a recovery fallback</div>
+          </div>
+          <div class="method-right">
+            <span class="badge badge-success"><span class="badge-dot"></span> 3 set</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation(); openSqEdit();">Change</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="method-detail workforce-only" id="detail-security-q">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Questions set</span>
+            <span class="method-detail-value">3 of 3</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Last updated</span>
+            <span class="method-detail-value">Jan 15, 2025, 09:22:11</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ACTIVE SESSIONS ===== -->
+    <div class="card collapsed" id="sessions">
+      <div class="card-header" onclick="toggleCard('sessions')">
+        <div class="card-header-left">
+          <div class="card-header-icon" style="background:var(--success-light);border:1px solid var(--success-border);">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--success)" stroke-width="1.5"><rect x="2" y="4" width="14" height="9" rx="1.5"/><path d="M6 16h6M9 13v3"/></svg>
+          </div>
+          <div>
+            <h2>Active sessions</h2>
+            <div class="subtitle">Devices currently signed in to your account</div>
+          </div>
+          <span class="card-count">3 sessions</span>
+        </div>
+        <div class="card-header-right">
+          <button class="btn-link" onclick="event.stopPropagation();">Sign out all others</button>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="session-table-header">
+          <span>Device</span>
+          <span>Location</span>
+          <span>Last active</span>
+          <span>Status</span>
+          <span></span>
+        </div>
+        <!-- Current -->
+        <div class="session-table-row">
+          <div class="session-device">
+            <span class="session-device-icon">🖥️</span>
+            <div>
+              <div class="session-device-name">MacBook Pro — Safari</div>
+              <div class="session-device-os">macOS Sonoma</div>
+            </div>
+          </div>
+          <div class="session-location"><span>🇺🇸</span> San Francisco, CA</div>
+          <div class="session-time">Active now</div>
+          <div class="session-status"><span class="badge badge-success"><span class="badge-dot"></span> This device</span></div>
+          <div class="session-actions"></div>
+        </div>
+        <!-- Inactive -->
+        <div class="session-table-row">
+          <div class="session-device">
+            <span class="session-device-icon">💻</span>
+            <div>
+              <div class="session-device-name">MacBook Pro — Safari</div>
+              <div class="session-device-os">macOS Sonoma</div>
+            </div>
+          </div>
+          <div class="session-location"><span>🇺🇸</span> San Francisco, CA</div>
+          <div class="session-time">3 hours ago</div>
+          <div class="session-status"><span class="badge badge-neutral"><span class="badge-dot"></span> Inactive</span></div>
+          <div class="session-actions">
+            <button class="btn btn-sm btn-danger-text" onclick="showToast('Session signed out')">Sign out</button>
+          </div>
+        </div>
+        <!-- Old -->
+        <div class="session-table-row">
+          <div class="session-device">
+            <span class="session-device-icon">📱</span>
+            <div>
+              <div class="session-device-name">iPhone 12 Pro — Chrome</div>
+              <div class="session-device-os">iOS 11.5</div>
+            </div>
+          </div>
+          <div class="session-location"><span>🇲🇽</span> Mexico City, MX</div>
+          <div class="session-time">1 month ago</div>
+          <div class="session-status"><span class="badge badge-neutral"><span class="badge-dot"></span> Inactive</span></div>
+          <div class="session-actions">
+            <button class="btn btn-sm btn-danger-text" onclick="showToast('Session signed out')">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MOBILE APP ===== -->
+    <div class="card collapsed" id="mobileApp">
+      <div class="card-header" onclick="toggleCard('mobileApp')">
+        <div class="card-header-left">
+          <div class="card-header-icon" style="background:#F3F4F6;border:1px solid var(--border);">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--text-muted)" stroke-width="1.5"><path d="M11 2H7a2 2 0 00-2 2v10a2 2 0 002 2h4a2 2 0 002-2V4a2 2 0 00-2-2z"/><path d="M9 14h.01"/></svg>
+          </div>
+          <div>
+            <h2>SecureAuth Authenticate app</h2>
+            <div class="subtitle" data-ciam="Your registered phones for approving sign-ins" data-workforce="Registered devices for push and symbol verification">Your registered phones for approving sign-ins</div>
+          </div>
+          <span class="card-count">1 device</span>
+        </div>
+        <div class="card-header-right">
+          <button class="btn btn-sm btn-setup" onclick="event.stopPropagation(); openDevicePairModal();">+ Register a phone</button>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="method-row" onclick="showToast('Opening device details…')">
+          <div class="method-icon-wrap">
+            <span style="font-size:18px;">📱</span>
+          </div>
+          <div class="method-info">
+            <div class="method-name">iPhone 12 Pro</div>
+            <div class="method-desc">iOS 11.5 · Registered Jan 12, 2026</div>
+          </div>
+          <div class="method-right">
+            <span class="badge badge-warning"><span class="badge-dot"></span> Setup incomplete</span>
+            <button class="btn btn-sm btn-danger-text" onclick="event.stopPropagation(); showToast('Device removed')">Remove</button>
+          </div>
+        </div>
+        <div class="dp-reset-link">
+          <a onclick="openDeviceResetModal()">Reset all</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== WORKSTATIONS ===== -->
+    <div class="card collapsed" id="workstations">
+      <div class="card-header" onclick="toggleCard('workstations')">
+        <div class="card-header-left">
+          <div class="card-header-icon" style="background:#F3F4F6;border:1px solid var(--border);">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="var(--text-muted)" stroke-width="1.5"><rect x="2" y="3" width="14" height="10" rx="1.5"/><path d="M6 16h6M9 13v3"/></svg>
+          </div>
+          <div>
+            <h2>Workstations</h2>
+            <div class="subtitle" data-ciam="Computers set up for quick sign-in" data-workforce="Computers paired for passwordless desktop sign-in">Computers set up for quick sign-in</div>
+          </div>
+          <span class="card-count">0</span>
+        </div>
+        <div class="card-header-right">
+          <button class="btn btn-sm btn-setup" onclick="event.stopPropagation(); openWsPairModal();">+ Add</button>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="empty-state" id="ws-empty-state">
+          <div class="empty-icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          </div>
+          <h4>No workstations paired</h4>
+          <p>Pair a computer for passwordless desktop sign-in with the SecureAuth Authenticate mobile app.</p>
+          <button class="btn btn-setup" onclick="openWsPairModal();">+ Pair a workstation</button>
+        </div>
+        <div class="ws-paired-list" id="ws-paired-list">
+          <div class="email-list">
+            <div class="email-list-header">
+              <span>Device</span>
+              <span>OS</span>
+              <span>Paired</span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#34D399" stroke-width="2"><circle cx="8" cy="8" r="6"/><path d="M6 8l1.5 1.5L10 6"/></svg>
+  <span id="toastMessage">Session signed out</span>
+  <div class="toast-actions">
+    <button class="dismiss" onclick="hideToast()">Dismiss</button>
+    <button class="undo" onclick="hideToast()">Undo</button>
+  </div>
+</div>
+
+<script>
+  let isWorkforce = false;
+  function toggleMode() {
+    isWorkforce = !isWorkforce;
+    document.body.classList.toggle('workforce', isWorkforce);
+    document.getElementById('modeLabel').textContent = isWorkforce ? 'Workforce' : 'CIAM';
+    document.getElementById('modeToggle').classList.toggle('workforce', isWorkforce);
+    document.querySelectorAll('[data-ciam]').forEach(el => {
+      el.textContent = isWorkforce ? el.dataset.workforce : el.dataset.ciam;
+    });
+
+    // Workstations: visible in Workforce only
+    document.getElementById('workstations').style.display = isWorkforce ? '' : 'none';
+  }
+
+  // Hide workstations by default (CIAM mode is default)
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('workstations').style.display = 'none';
+  });
+
+  // Accordion toggle — only one card open at a time
+  const accordionCards = ['verifyMethods', 'sessions', 'mobileApp', 'workstations'];
+
+  function toggleCard(id) {
+    // Primary credential is not part of the accordion — always stays open
+    if (!accordionCards.includes(id)) {
+      document.getElementById(id).classList.toggle('collapsed');
+      return;
+    }
+
+    const target = document.getElementById(id);
+    const isCurrentlyCollapsed = target.classList.contains('collapsed');
+
+    // Collapse all accordion cards
+    accordionCards.forEach(cardId => {
+      document.getElementById(cardId).classList.add('collapsed');
+    });
+
+    // If it was collapsed, open it
+    if (isCurrentlyCollapsed) {
+      target.classList.remove('collapsed');
+    }
+  }
+
+  // Toggle method detail panel
+  function toggleDetail(detailId) {
+    const panel = document.getElementById(detailId);
+    const row = panel.previousElementSibling;
+    const wasOpen = panel.classList.contains('open');
+
+    // Close all other open detail panels and hide SQ edit form
+    document.querySelectorAll('.method-detail.open').forEach(d => {
+      d.classList.remove('open');
+      if (d.previousElementSibling) d.previousElementSibling.classList.remove('expanded');
+    });
+    if (!wasOpen) {
+      panel.classList.add('open');
+      row.classList.add('expanded');
+    }
+  }
+
+  // Toggle visibility of security question answer
+  function toggleSqVis(btn) {
+    const input = btn.parentElement.querySelector('input');
+    if (input.type === 'text') {
+      input.type = 'password';
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    } else {
+      input.type = 'text';
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    }
+  }
+
+  // Open security questions modal
+  function openSqEdit() {
+    document.getElementById('sq-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSqEdit() {
+    document.getElementById('sq-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // TOTP Modal
+  function generateTotpKey() {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    var key = '';
+    for (var i = 0; i < 32; i++) {
+      key += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return key;
+  }
+
+  function generateQrSvg() {
+    // Generate a randomized QR-like pattern
+    var svg = '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">';
+    svg += '<rect width="200" height="200" fill="#fff"/>';
+    // Fixed finder patterns
+    svg += '<rect x="16" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>';
+    svg += '<rect x="22" y="22" width="36" height="36" rx="2" fill="#fff"/>';
+    svg += '<rect x="28" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>';
+    svg += '<rect x="136" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>';
+    svg += '<rect x="142" y="22" width="36" height="36" rx="2" fill="#fff"/>';
+    svg += '<rect x="148" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>';
+    svg += '<rect x="16" y="136" width="48" height="48" rx="4" fill="#0D1F32"/>';
+    svg += '<rect x="22" y="142" width="36" height="36" rx="2" fill="#fff"/>';
+    svg += '<rect x="28" y="148" width="24" height="24" rx="2" fill="#0D1F32"/>';
+    // Random data modules
+    for (var row = 0; row < 21; row++) {
+      for (var col = 0; col < 21; col++) {
+        // Skip finder pattern areas
+        if ((row < 5 && col < 5) || (row < 5 && col > 15) || (row > 15 && col < 5)) continue;
+        if (Math.random() > 0.55) {
+          svg += '<rect x="' + (16 + col * 8) + '" y="' + (16 + row * 8) + '" width="8" height="8" fill="#0D1F32"/>';
+        }
+      }
+    }
+    svg += '</svg>';
+    return svg;
+  }
+
+  function addNewTotp() {
+    // Generate new key and QR code in the detail panel
+    var newKey = generateTotpKey();
+    document.querySelectorAll('.totp-key-value').forEach(function(el) { el.value = newKey; });
+    // Update QR in detail panel
+    var detailQr = document.querySelector('.totp-qr-thumb');
+    if (detailQr) { detailQr.innerHTML = generateQrSvg(); }
+    // Expand accordion if not already open
+    var detail = document.getElementById('detail-totp');
+    if (detail && !detail.classList.contains('open')) {
+      toggleDetail('detail-totp');
+    }
+    showToast('New TOTP code generated');
+  }
+
+  function openTotpModal() {
+    // Generate new key and QR code
+    var newKey = generateTotpKey();
+    document.querySelectorAll('.totp-key-value').forEach(function(el) { el.value = newKey; });
+    document.querySelector('.totp-modal-qr-wrapper').innerHTML = generateQrSvg();
+    document.getElementById('totp-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeTotpModal() {
+    document.getElementById('totp-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function copyTotpKey(btn) {
+    var input = btn.parentElement.querySelector('.totp-key-value');
+    navigator.clipboard.writeText(input.value).then(function() {
+      showToast('Key copied to clipboard');
+      btn.style.color = '#12B76A';
+      setTimeout(function() { btn.style.color = ''; }, 1500);
+    }).catch(function() {
+      input.select();
+      document.execCommand('copy');
+      showToast('Key copied to clipboard');
+    });
+  }
+
+  // Passkey Modal
+  function openPasskeyModal() {
+    document.getElementById('pk-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('pk-name-input').value = '';
+    document.getElementById('pk-skip-username').checked = false;
+    setTimeout(function() { document.getElementById('pk-name-input').focus(); }, 100);
+  }
+
+  function closePasskeyModal() {
+    document.getElementById('pk-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function createPasskey() {
+    var name = document.getElementById('pk-name-input').value.trim();
+    if (!name) {
+      document.getElementById('pk-name-input').focus();
+      document.getElementById('pk-name-input').style.borderColor = 'var(--danger)';
+      setTimeout(function() { document.getElementById('pk-name-input').style.borderColor = ''; }, 2000);
+      return;
+    }
+    showToast('Passkey "' + name + '" registered successfully');
+    closePasskeyModal();
+  }
+
+  function deletePasskey(rowId, name) {
+    var row = document.getElementById(rowId);
+    if (row) {
+      row.style.opacity = '0.4';
+      row.style.pointerEvents = 'none';
+      showToast('Passkey "' + name + '" deleted');
+    }
+  }
+
+  function resetAllPasskeys() {
+    document.querySelectorAll('.passkey-table-row').forEach(function(row) {
+      row.style.opacity = '0.4';
+      row.style.pointerEvents = 'none';
+    });
+    showToast('All passkeys have been reset');
+  }
+
+  // ===== CHANGE PASSWORD MODAL =====
+  function openPasswordModal() {
+    document.getElementById('pw-old').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+    // Reset all to password type
+    ['pw-old', 'pw-new', 'pw-confirm'].forEach(function(id) {
+      document.getElementById(id).type = 'password';
+    });
+    // Reset strength bars
+    resetStrengthBars('pw-new-strength');
+    resetStrengthBars('pw-confirm-strength');
+    document.getElementById('pw-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { document.getElementById('pw-old').focus(); }, 100);
+  }
+
+  function closePasswordModal() {
+    document.getElementById('pw-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function togglePwVisibility(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    // Swap icon to eye-off when visible
+    if (isPassword) {
+      btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/><path d="M14.12 14.12a3 3 0 11-4.24-4.24"/></svg>';
+    } else {
+      btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+  }
+
+  function updatePasswordStrength(containerId, value) {
+    var bars = document.getElementById(containerId).querySelectorAll('.pw-strength-bar');
+    // Reset all
+    bars.forEach(function(b) { b.className = 'pw-strength-bar'; });
+    if (!value) return;
+    var score = 0;
+    if (value.length >= 4) score++;
+    if (value.length >= 8) score++;
+    if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++;
+    if (/[0-9]/.test(value)) score++;
+    if (/[^A-Za-z0-9]/.test(value)) score++;
+    var cls = score <= 2 ? 'active' : (score <= 3 ? 'medium' : 'strong');
+    for (var i = 0; i < score && i < bars.length; i++) {
+      bars[i].classList.add(cls);
+    }
+  }
+
+  function resetStrengthBars(containerId) {
+    document.getElementById(containerId).querySelectorAll('.pw-strength-bar').forEach(function(b) {
+      b.className = 'pw-strength-bar';
+    });
+  }
+
+  function savePassword() {
+    var oldPw = document.getElementById('pw-old').value;
+    var newPw = document.getElementById('pw-new').value;
+    var confirmPw = document.getElementById('pw-confirm').value;
+    if (!oldPw) { document.getElementById('pw-old').focus(); return; }
+    if (!newPw) { document.getElementById('pw-new').focus(); return; }
+    if (!confirmPw) { document.getElementById('pw-confirm').focus(); return; }
+    if (newPw !== confirmPw) { showToast('Passwords do not match'); return; }
+    closePasswordModal();
+    showToast('Password changed successfully');
+  }
+
+  // ===== EMAIL OTP MODAL =====
+  function openEmailOtpModal() {
+    document.getElementById('em-email-input').value = '';
+    document.getElementById('em-verify-section').classList.remove('visible');
+    document.getElementById('em-verify-btn').style.display = 'none';
+    document.getElementById('em-send-btn').disabled = false;
+    document.getElementById('em-send-btn').textContent = 'Send code';
+    // Clear OTP inputs
+    document.querySelectorAll('#em-otp-row .em-otp-input').forEach(function(inp) { inp.value = ''; });
+    document.getElementById('em-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { document.getElementById('em-email-input').focus(); }, 100);
+  }
+
+  function closeEmailOtpModal() {
+    document.getElementById('em-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function sendEmailOtp() {
+    var email = document.getElementById('em-email-input').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('em-email-input').focus();
+      showToast('Please enter a valid email address');
+      return;
+    }
+    // Show sending state
+    var btn = document.getElementById('em-send-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    setTimeout(function() {
+      btn.textContent = 'Sent';
+      btn.disabled = true;
+      // Show verify section
+      document.getElementById('em-sent-to').textContent = email;
+      document.getElementById('em-verify-section').classList.add('visible');
+      document.getElementById('em-verify-btn').style.display = '';
+      // Focus first OTP input
+      var firstOtp = document.querySelector('#em-otp-row .em-otp-input');
+      if (firstOtp) firstOtp.focus();
+    }, 1200);
+  }
+
+  function resendEmailOtp() {
+    var btn = document.getElementById('em-send-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    setTimeout(function() {
+      btn.textContent = 'Resend';
+      btn.disabled = false;
+      showToast('Verification code resent');
+      // Clear and refocus
+      document.querySelectorAll('#em-otp-row .em-otp-input').forEach(function(inp) { inp.value = ''; });
+      document.querySelector('#em-otp-row .em-otp-input').focus();
+    }, 1000);
+  }
+
+  function verifyEmailOtp() {
+    var code = '';
+    document.querySelectorAll('#em-otp-row .em-otp-input').forEach(function(inp) { code += inp.value; });
+    if (code.length < 6) {
+      showToast('Please enter the full 6-digit code');
+      return;
+    }
+    closeEmailOtpModal();
+    showToast('Email verified and added successfully');
+  }
+
+  function deleteEmailOtp(rowId, email) {
+    if (!confirm('Remove ' + email + ' from Email OTP?')) return;
+    var row = document.getElementById(rowId);
+    if (row) {
+      row.style.opacity = '0.4';
+      row.style.transition = 'opacity 0.3s';
+      setTimeout(function() { row.remove(); }, 300);
+    }
+    showToast(email + ' removed');
+  }
+
+  // OTP input auto-advance and backspace handling
+  document.querySelectorAll('#em-otp-row .em-otp-input').forEach(function(input, idx, inputs) {
+    input.addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^0-9]/g, '');
+      if (this.value && idx < inputs.length - 1) {
+        inputs[idx + 1].focus();
+      }
+    });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && !this.value && idx > 0) {
+        inputs[idx - 1].focus();
+      }
+    });
+    // Allow paste of full code
+    input.addEventListener('paste', function(e) {
+      e.preventDefault();
+      var paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+      for (var i = 0; i < paste.length && (idx + i) < inputs.length; i++) {
+        inputs[idx + i].value = paste[i];
+      }
+      var nextIdx = Math.min(idx + paste.length, inputs.length - 1);
+      inputs[nextIdx].focus();
+    });
+  });
+
+  // SMS OTP Modal
+  function openSmsOtpModal() {
+    document.getElementById('sms-phone-input').value = '';
+    document.getElementById('sms-verify-section').classList.remove('visible');
+    document.getElementById('sms-verify-btn').style.display = 'none';
+    document.getElementById('sms-send-btn').disabled = false;
+    document.getElementById('sms-send-btn').textContent = 'Send code';
+    document.querySelectorAll('#sms-otp-row .em-otp-input').forEach(function(inp) { inp.value = ''; });
+    document.getElementById('sms-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { document.getElementById('sms-phone-input').focus(); }, 100);
+  }
+
+  function closeSmsOtpModal() {
+    document.getElementById('sms-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function sendSmsOtp() {
+    var phone = document.getElementById('sms-phone-input').value.trim();
+    if (!phone || phone.replace(/[^0-9]/g, '').length < 7) {
+      document.getElementById('sms-phone-input').focus();
+      showToast('Please enter a valid phone number');
+      return;
+    }
+    var country = document.getElementById('sms-country').value;
+    var fullNumber = country + ' ' + phone;
+    var btn = document.getElementById('sms-send-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    setTimeout(function() {
+      btn.textContent = 'Sent';
+      btn.disabled = true;
+      document.getElementById('sms-sent-to').textContent = fullNumber;
+      document.getElementById('sms-verify-section').classList.add('visible');
+      document.getElementById('sms-verify-btn').style.display = '';
+      var firstOtp = document.querySelector('#sms-otp-row .em-otp-input');
+      if (firstOtp) firstOtp.focus();
+    }, 1200);
+  }
+
+  function resendSmsOtp() {
+    var btn = document.getElementById('sms-send-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    setTimeout(function() {
+      btn.textContent = 'Sent';
+      btn.disabled = true;
+      showToast('Verification code resent');
+      document.querySelectorAll('#sms-otp-row .em-otp-input').forEach(function(inp) { inp.value = ''; });
+      document.querySelector('#sms-otp-row .em-otp-input').focus();
+    }, 1000);
+  }
+
+  function verifySmsOtp() {
+    var code = '';
+    document.querySelectorAll('#sms-otp-row .em-otp-input').forEach(function(inp) { code += inp.value; });
+    if (code.length < 6) {
+      showToast('Please enter the full 6-digit code');
+      return;
+    }
+    closeSmsOtpModal();
+    showToast('Phone number verified and added successfully');
+  }
+
+  function deleteSmsOtp(rowId, phone) {
+    if (!confirm('Remove ' + phone + ' from SMS OTP?')) return;
+    var row = document.getElementById(rowId);
+    if (row) {
+      row.style.opacity = '0.4';
+      row.style.transition = 'opacity 0.3s';
+      setTimeout(function() { row.remove(); }, 300);
+    }
+    showToast(phone + ' removed');
+  }
+
+  // SMS OTP input auto-advance and backspace handling
+  document.querySelectorAll('#sms-otp-row .em-otp-input').forEach(function(input, idx, inputs) {
+    input.addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^0-9]/g, '');
+      if (this.value && idx < inputs.length - 1) {
+        inputs[idx + 1].focus();
+      }
+    });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' && !this.value && idx > 0) {
+        inputs[idx - 1].focus();
+      }
+    });
+    input.addEventListener('paste', function(e) {
+      e.preventDefault();
+      var paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+      for (var i = 0; i < paste.length && (idx + i) < inputs.length; i++) {
+        inputs[idx + i].value = paste[i];
+      }
+      var nextIdx = Math.min(idx + paste.length, inputs.length - 1);
+      inputs[nextIdx].focus();
+    });
+  });
+
+  // Workstation Pair Modal
+  var wsCounter = 0;
+  function openWsPairModal() {
+    document.getElementById('ws-pair-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeWsPairModal() {
+    document.getElementById('ws-pair-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function pairWorkstation() {
+    closeWsPairModal();
+    wsCounter++;
+    // Hide empty state, show paired list
+    document.getElementById('ws-empty-state').style.display = 'none';
+    var list = document.getElementById('ws-paired-list');
+    list.classList.add('visible');
+    // Add new row
+    var rowId = 'ws-row-' + wsCounter;
+    var now = new Date();
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var dateStr = months[now.getMonth()] + ' ' + String(now.getDate()).padStart(2,'0') + ', ' + now.getFullYear();
+    var row = document.createElement('div');
+    row.className = 'email-list-row';
+    row.id = rowId;
+    row.innerHTML =
+      '<div class="email-addr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span>This Device</span></div>' +
+      '<div class="email-date">macOS</div>' +
+      '<div class="email-status">' + dateStr + '</div>' +
+      '<div class="email-actions"><button class="btn-icon-danger" onclick="event.stopPropagation(); unpairWorkstation(\'' + rowId + '\');" title="Unpair"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></div>';
+    list.querySelector('.email-list').appendChild(row);
+    // Update count
+    var count = list.querySelectorAll('.email-list-row').length;
+    var countEl = document.querySelector('#workstations .card-count');
+    if (countEl) countEl.textContent = count;
+    showToast('Workstation paired successfully');
+  }
+
+  function unpairWorkstation(rowId) {
+    if (!confirm('Unpair this workstation?')) return;
+    var row = document.getElementById(rowId);
+    if (row) {
+      row.style.opacity = '0.4';
+      row.style.transition = 'opacity 0.3s';
+      setTimeout(function() {
+        row.remove();
+        var list = document.getElementById('ws-paired-list');
+        var remaining = list.querySelectorAll('.email-list-row').length;
+        var countEl = document.querySelector('#workstations .card-count');
+        if (countEl) countEl.textContent = remaining;
+        if (remaining === 0) {
+          list.classList.remove('visible');
+          document.getElementById('ws-empty-state').style.display = '';
+        }
+      }, 300);
+    }
+    showToast('Workstation unpaired');
+  }
+
+  /* ===== DEVICE PAIR FLOW (SecureAuth Authenticate) ===== */
+  var dpCounter = 0;
+  var dpPairTimer = null;
+
+  function openDevicePairModal() {
+    var modal = document.getElementById('dp-pair-modal');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('dp-waiting').classList.remove('visible');
+    // Auto-simulate pairing after 3 seconds
+    dpPairTimer = setTimeout(function() {
+      document.getElementById('dp-waiting').classList.add('visible');
+      dpPairTimer = setTimeout(function() {
+        pairDevice();
+      }, 2000);
+    }, 1500);
+  }
+
+  function closeDevicePairModal() {
+    document.getElementById('dp-pair-modal').classList.remove('open');
+    document.body.style.overflow = '';
+    if (dpPairTimer) { clearTimeout(dpPairTimer); dpPairTimer = null; }
+    document.getElementById('dp-waiting').classList.remove('visible');
+  }
+
+  function pairDevice() {
+    closeDevicePairModal();
+    dpCounter++;
+    var deviceNames = ['Pixel 8 Pro', 'Samsung Galaxy S24', 'OnePlus 12', 'iPhone 15'];
+    var deviceOS = ['Android 15', 'Android 14', 'Android 14', 'iOS 17.4'];
+    var idx = (dpCounter - 1) % deviceNames.length;
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    var cardBody = document.querySelector('#mobileApp .card-body');
+    var resetLink = cardBody.querySelector('.dp-reset-link');
+
+    // Create new device row
+    var row = document.createElement('div');
+    row.className = 'method-row';
+    row.id = 'dp-row-' + dpCounter;
+    row.onclick = function() { showToast('Opening device details…'); };
+    row.innerHTML = '<div class="method-icon-wrap"><span style="font-size:18px;">📱</span></div>' +
+      '<div class="method-info"><div class="method-name">' + deviceNames[idx] + '</div>' +
+      '<div class="method-desc">' + deviceOS[idx] + ' · Registered ' + dateStr + '</div></div>' +
+      '<div class="method-right"><span class="badge badge-success"><span class="badge-dot"></span> Active</span>' +
+      '<button class="btn btn-sm btn-danger-text" onclick="event.stopPropagation(); removeDevice(\'' + row.id + '\', \'' + deviceNames[idx] + '\')">Remove</button></div>';
+
+    // Insert before the reset link
+    if (resetLink) {
+      cardBody.insertBefore(row, resetLink);
+    } else {
+      cardBody.appendChild(row);
+    }
+
+    // Update count
+    var allRows = cardBody.querySelectorAll('.method-row');
+    var countEl = document.querySelector('#mobileApp .card-count');
+    if (countEl) countEl.textContent = allRows.length + (allRows.length === 1 ? ' device' : ' devices');
+
+    showToast('Your device has been paired successfully');
+  }
+
+  function removeDevice(rowId, name) {
+    if (!confirm('Remove ' + name + '?')) return;
+    var row = document.getElementById(rowId);
+    if (row) {
+      row.style.opacity = '0';
+      row.style.transition = 'opacity 0.3s';
+      setTimeout(function() {
+        row.remove();
+        var cardBody = document.querySelector('#mobileApp .card-body');
+        var allRows = cardBody.querySelectorAll('.method-row');
+        var countEl = document.querySelector('#mobileApp .card-count');
+        if (countEl) countEl.textContent = allRows.length + (allRows.length === 1 ? ' device' : ' devices');
+        if (allRows.length === 0) {
+          if (countEl) countEl.textContent = '0 devices';
+        }
+      }, 300);
+    }
+    showToast(name + ' removed');
+  }
+
+  function openDeviceResetModal() {
+    document.getElementById('dp-reset-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDeviceResetModal() {
+    document.getElementById('dp-reset-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function resetAllDevices() {
+    closeDeviceResetModal();
+    var cardBody = document.querySelector('#mobileApp .card-body');
+    var rows = cardBody.querySelectorAll('.method-row');
+    rows.forEach(function(r) { r.remove(); });
+    var countEl = document.querySelector('#mobileApp .card-count');
+    if (countEl) countEl.textContent = '0 devices';
+    // Remove reset link too since no devices
+    var resetLink = cardBody.querySelector('.dp-reset-link');
+    if (resetLink) resetLink.style.display = 'none';
+    showToast('All devices have been reset');
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (document.getElementById('dp-reset-modal').classList.contains('open')) {
+        closeDeviceResetModal();
+      } else if (document.getElementById('dp-pair-modal').classList.contains('open')) {
+        closeDevicePairModal();
+      } else if (document.getElementById('ws-pair-modal').classList.contains('open')) {
+        closeWsPairModal();
+      } else if (document.getElementById('sms-modal').classList.contains('open')) {
+        closeSmsOtpModal();
+      } else if (document.getElementById('em-modal').classList.contains('open')) {
+        closeEmailOtpModal();
+      } else if (document.getElementById('pw-modal').classList.contains('open')) {
+        closePasswordModal();
+      } else if (document.getElementById('pk-modal').classList.contains('open')) {
+        closePasskeyModal();
+      } else if (document.getElementById('totp-modal').classList.contains('open')) {
+        closeTotpModal();
+      } else if (document.getElementById('sq-modal').classList.contains('open')) {
+        closeSqEdit();
+      }
+    }
+  });
+
+  // Scroll to a specific method row, open its detail panel, and highlight it
+  function scrollToMethod(methodId) {
+    // 1. Open the Verification Methods card
+    accordionCards.forEach(id => document.getElementById(id).classList.add('collapsed'));
+    document.getElementById('verifyMethods').classList.remove('collapsed');
+
+    // 2. Find the target method row
+    const target = document.getElementById(methodId);
+    if (!target) return;
+
+    // 3. Open its detail panel
+    const onclickAttr = target.getAttribute('onclick') || '';
+    const match = onclickAttr.match(/toggleDetail\('([^']+)'\)/);
+    if (match) {
+      const detailId = match[1];
+      const detail = document.getElementById(detailId);
+      // Close all other open details first
+      document.querySelectorAll('.method-detail.open').forEach(d => {
+        if (d.id !== detailId) d.classList.remove('open');
+      });
+      if (detail && !detail.classList.contains('open')) detail.classList.add('open');
+    }
+
+    // 4. Scroll + highlight
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('highlight');
+      setTimeout(() => target.classList.remove('highlight'), 2500);
+    }, 200);
+  }
+
+  // Improve security CTA — cycles through all unconfigured methods
+  let reviewCycleIndex = 0;
+  function improveSecurity() {
+    const redChips = document.querySelectorAll('.method-chip.not-enrolled');
+    if (redChips.length === 0) return;
+
+    const redMethods = Array.from(redChips).map(chip => chip.getAttribute('data-method'));
+    if (reviewCycleIndex >= redMethods.length) reviewCycleIndex = 0;
+
+    const currentMethod = redMethods[reviewCycleIndex];
+
+    // Update button text with counter
+    const btn = document.querySelector('#securityBanner .btn-primary');
+    if (btn) btn.textContent = 'Fix ' + (reviewCycleIndex + 1) + ' of ' + redMethods.length;
+
+    scrollToMethod(currentMethod);
+    reviewCycleIndex++;
+
+    // Reset after cycling through all
+    if (reviewCycleIndex >= redMethods.length) {
+      setTimeout(() => {
+        reviewCycleIndex = 0;
+        if (btn) btn.textContent = 'Improve security';
+      }, 3000);
+    }
+  }
+
+  function showToast(msg) {
+    document.getElementById('toastMessage').textContent = msg;
+    document.getElementById('toast').classList.add('show');
+    setTimeout(() => hideToast(), 4000);
+  }
+  function dismissBanner() {
+    document.getElementById('securityBanner').style.display = 'none';
+  }
+
+  function hideToast() {
+    document.getElementById('toast').classList.remove('show');
+  }
+</script>
+
+<!-- Security Questions Modal -->
+<div class="sq-modal-backdrop" id="sq-modal" onclick="closeSqEdit()">
+  <div class="sq-modal" onclick="event.stopPropagation();">
+    <div class="sq-modal-header">
+      <h3>Change security questions</h3>
+      <button class="sq-modal-close" onclick="closeSqEdit();" title="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sq-modal-body">
+      <p class="sq-helper" style="margin-bottom:20px;">Answer each question with information only you know, making it difficult for unauthorized users to guess.</p>
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="sq-field">
+          <div class="sq-field-label">What was the name of your elementary school?</div>
+          <div class="sq-field-input">
+            <input type="password" value="Zeton Preschool" />
+            <button class="sq-toggle-vis" onclick="toggleSqVis(this);" title="Toggle visibility">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="sq-field">
+          <div class="sq-field-label">Who was your childhood hero?</div>
+          <div class="sq-field-input">
+            <input type="password" value="Iron Man" />
+            <button class="sq-toggle-vis" onclick="toggleSqVis(this);" title="Toggle visibility">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="sq-field">
+          <div class="sq-field-label">What is the name of your favorite childhood friend?</div>
+          <div class="sq-field-input">
+            <input type="password" value="Kahan" />
+            <button class="sq-toggle-vis" onclick="toggleSqVis(this);" title="Toggle visibility">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sq-modal-footer">
+      <button class="modal-cancel-btn" onclick="closeSqEdit();">Cancel</button>
+      <button class="modal-primary-btn" onclick="showToast('Security questions saved'); closeSqEdit();">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOTP QR Code Modal -->
+<div class="totp-modal-backdrop" id="totp-modal" onclick="closeTotpModal()">
+  <div class="totp-modal" onclick="event.stopPropagation();">
+    <div class="totp-modal-header">
+      <h3>Use an authenticator app to scan</h3>
+      <button class="totp-modal-close" onclick="closeTotpModal();" title="Close">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="totp-modal-body">
+      <p class="totp-modal-desc">Scan this QR code with any authenticator app (like SecureAuth Authenticate or Google Authenticator) to generate time-based one-time passcodes (TOTP).</p>
+      <div class="totp-modal-qr-wrapper">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" fill="#fff"/>
+          <rect x="16" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+          <rect x="22" y="22" width="36" height="36" rx="2" fill="#fff"/>
+          <rect x="28" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+          <rect x="136" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+          <rect x="142" y="22" width="36" height="36" rx="2" fill="#fff"/>
+          <rect x="148" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+          <rect x="16" y="136" width="48" height="48" rx="4" fill="#0D1F32"/>
+          <rect x="22" y="142" width="36" height="36" rx="2" fill="#fff"/>
+          <rect x="28" y="148" width="24" height="24" rx="2" fill="#0D1F32"/>
+          <rect x="72" y="16" width="8" height="8" fill="#0D1F32"/><rect x="88" y="16" width="8" height="8" fill="#0D1F32"/>
+          <rect x="104" y="16" width="8" height="8" fill="#0D1F32"/><rect x="72" y="32" width="8" height="8" fill="#0D1F32"/>
+          <rect x="96" y="32" width="8" height="8" fill="#0D1F32"/><rect x="112" y="32" width="8" height="8" fill="#0D1F32"/>
+          <rect x="80" y="48" width="8" height="8" fill="#0D1F32"/><rect x="104" y="48" width="8" height="8" fill="#0D1F32"/>
+          <rect x="72" y="72" width="8" height="8" fill="#0D1F32"/><rect x="88" y="72" width="8" height="8" fill="#0D1F32"/>
+          <rect x="112" y="72" width="8" height="8" fill="#0D1F32"/><rect x="136" y="72" width="8" height="8" fill="#0D1F32"/>
+          <rect x="160" y="72" width="8" height="8" fill="#0D1F32"/><rect x="16" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="40" y="80" width="8" height="8" fill="#0D1F32"/><rect x="80" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="104" y="80" width="8" height="8" fill="#0D1F32"/><rect x="128" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="152" y="80" width="8" height="8" fill="#0D1F32"/><rect x="176" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="24" y="96" width="8" height="8" fill="#0D1F32"/><rect x="48" y="96" width="8" height="8" fill="#0D1F32"/>
+          <rect x="72" y="96" width="8" height="8" fill="#0D1F32"/><rect x="96" y="96" width="8" height="8" fill="#0D1F32"/>
+          <rect x="120" y="96" width="8" height="8" fill="#0D1F32"/><rect x="144" y="96" width="8" height="8" fill="#0D1F32"/>
+          <rect x="168" y="96" width="8" height="8" fill="#0D1F32"/><rect x="16" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="40" y="112" width="8" height="8" fill="#0D1F32"/><rect x="56" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="88" y="112" width="8" height="8" fill="#0D1F32"/><rect x="120" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="152" y="112" width="8" height="8" fill="#0D1F32"/><rect x="176" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="72" y="128" width="8" height="8" fill="#0D1F32"/><rect x="96" y="128" width="8" height="8" fill="#0D1F32"/>
+          <rect x="120" y="128" width="8" height="8" fill="#0D1F32"/><rect x="144" y="128" width="8" height="8" fill="#0D1F32"/>
+          <rect x="168" y="128" width="8" height="8" fill="#0D1F32"/><rect x="80" y="144" width="8" height="8" fill="#0D1F32"/>
+          <rect x="104" y="144" width="8" height="8" fill="#0D1F32"/><rect x="136" y="144" width="8" height="8" fill="#0D1F32"/>
+          <rect x="160" y="144" width="8" height="8" fill="#0D1F32"/><rect x="72" y="160" width="8" height="8" fill="#0D1F32"/>
+          <rect x="96" y="160" width="8" height="8" fill="#0D1F32"/><rect x="112" y="160" width="8" height="8" fill="#0D1F32"/>
+          <rect x="144" y="160" width="8" height="8" fill="#0D1F32"/><rect x="176" y="160" width="8" height="8" fill="#0D1F32"/>
+          <rect x="80" y="176" width="8" height="8" fill="#0D1F32"/><rect x="104" y="176" width="8" height="8" fill="#0D1F32"/>
+          <rect x="128" y="176" width="8" height="8" fill="#0D1F32"/><rect x="152" y="176" width="8" height="8" fill="#0D1F32"/>
+        </svg>
+      </div>
+      <div class="totp-modal-key-section">
+        <p class="totp-modal-manual-hint">Can't scan the code? Enter the key manually.</p>
+        <div class="totp-key-box" style="margin:0 auto;">
+          <input class="totp-key-value" type="text" readonly value="QSXHYNVN6IXWJMDFHRE5S2JCMHTG7GLE"/>
+          <button class="totp-key-copy" onclick="copyTotpKey(this);" title="Copy key">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Passkey Registration Modal -->
+<div class="pk-modal-backdrop" id="pk-modal" onclick="closePasskeyModal()">
+  <div class="pk-modal" onclick="event.stopPropagation();">
+    <div class="pk-modal-header">
+      <h3>Add Passkey</h3>
+      <button class="pk-modal-close" onclick="closePasskeyModal();" title="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="pk-modal-body">
+      <p class="pk-modal-desc">Register passkeys to log in without passwords using your device's biometrics or security key.</p>
+      <div class="pk-field">
+        <label class="pk-field-label">Name this passkey (28 character limit), then click Create and follow the prompts.</label>
+        <input type="text" class="pk-field-input" id="pk-name-input" placeholder="e.g. Work laptop" maxlength="28" />
+      </div>
+      <div class="pk-toggle-row">
+        <div class="pk-toggle-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="pk-toggle-label">
+          <span>Skip username entry for faster sign-in</span>
+        </div>
+        <label class="pk-switch">
+          <input type="checkbox" id="pk-skip-username" />
+          <span class="pk-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="pk-modal-footer">
+      <button class="modal-cancel-btn" onclick="closePasskeyModal();">Cancel</button>
+      <button class="modal-primary-btn" onclick="createPasskey();">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="pw-modal-backdrop" id="pw-modal" onclick="closePasswordModal()">
+  <div class="pw-modal" onclick="event.stopPropagation();">
+    <div class="pw-modal-header">
+      <h3>Change password</h3>
+      <button class="pw-modal-close" onclick="closePasswordModal();" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="pw-modal-body">
+      <p class="pw-modal-desc">Choose a strong password, and don't reuse it for other accounts.</p>
+      <div class="pw-field">
+        <label class="pw-field-label">Old password</label>
+        <div class="pw-field-wrap">
+          <input type="password" class="pw-field-input" id="pw-old" placeholder="" autocomplete="current-password" />
+          <button class="pw-eye-btn" onclick="togglePwVisibility('pw-old', this)" type="button" title="Show password">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="pw-field">
+        <label class="pw-field-label">New password</label>
+        <div class="pw-field-wrap">
+          <input type="password" class="pw-field-input" id="pw-new" placeholder="" autocomplete="new-password" oninput="updatePasswordStrength('pw-new-strength', this.value)" />
+          <button class="pw-eye-btn" onclick="togglePwVisibility('pw-new', this)" type="button" title="Show password">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="pw-strength" id="pw-new-strength">
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+        </div>
+      </div>
+      <div class="pw-field">
+        <label class="pw-field-label">Confirm password</label>
+        <div class="pw-field-wrap">
+          <input type="password" class="pw-field-input" id="pw-confirm" placeholder="" autocomplete="new-password" oninput="updatePasswordStrength('pw-confirm-strength', this.value)" />
+          <button class="pw-eye-btn" onclick="togglePwVisibility('pw-confirm', this)" type="button" title="Show password">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="pw-strength" id="pw-confirm-strength">
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+          <div class="pw-strength-bar"></div>
+        </div>
+      </div>
+    </div>
+    <div class="pw-modal-footer">
+      <button class="modal-cancel-btn" onclick="closePasswordModal();">Cancel</button>
+      <button class="modal-primary-btn" onclick="savePassword();">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL OTP MODAL -->
+<div class="em-modal-backdrop" id="em-modal" onclick="closeEmailOtpModal()">
+  <div class="em-modal" onclick="event.stopPropagation();">
+    <div class="em-modal-header">
+      <h3>Add email for OTP</h3>
+      <button class="em-modal-close" onclick="closeEmailOtpModal();" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="em-modal-body">
+      <p class="em-modal-desc">Add an email address to receive one-time passcodes for sign-in verification.</p>
+      <div class="em-field">
+        <label class="em-field-label">Email address</label>
+        <div class="em-field-wrap">
+          <input type="email" class="em-field-input" id="em-email-input" placeholder="name@example.com" />
+          <button class="em-send-btn" id="em-send-btn" onclick="sendEmailOtp();">Send code</button>
+        </div>
+      </div>
+      <div class="em-verify-section" id="em-verify-section">
+        <p class="em-verify-msg">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#12B76A" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#12B76A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Verification code sent to <strong id="em-sent-to"></strong>
+        </p>
+        <div class="em-field">
+          <label class="em-field-label">Enter the 6-digit code</label>
+          <div class="em-otp-row" id="em-otp-row">
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+          </div>
+        </div>
+        <p class="em-resend">Didn't receive a code? <a onclick="resendEmailOtp()">Resend code</a></p>
+      </div>
+    </div>
+    <div class="em-modal-footer">
+      <button class="modal-cancel-btn" onclick="closeEmailOtpModal();">Cancel</button>
+      <button class="modal-primary-btn" id="em-verify-btn" onclick="verifyEmailOtp();" style="display:none;">Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- SMS OTP MODAL -->
+<div class="sms-modal-backdrop" id="sms-modal" onclick="closeSmsOtpModal()">
+  <div class="em-modal" onclick="event.stopPropagation();">
+    <div class="em-modal-header">
+      <h3>Add phone number for SMS OTP</h3>
+      <button class="em-modal-close" onclick="closeSmsOtpModal();" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="em-modal-body">
+      <p class="em-modal-desc">Add a phone number to receive one-time passcodes via SMS for sign-in verification.</p>
+      <div class="em-field">
+        <label class="em-field-label">Phone number</label>
+        <div class="em-field-wrap">
+          <select class="sms-country-select" id="sms-country">
+            <option value="+1">+1</option>
+            <option value="+44">+44</option>
+            <option value="+61">+61</option>
+            <option value="+91">+91</option>
+            <option value="+49">+49</option>
+            <option value="+33">+33</option>
+            <option value="+81">+81</option>
+          </select>
+          <input type="tel" class="em-field-input" id="sms-phone-input" placeholder="(555) 123-4567" />
+          <button class="em-send-btn" id="sms-send-btn" onclick="sendSmsOtp();">Send code</button>
+        </div>
+      </div>
+      <div class="em-verify-section" id="sms-verify-section">
+        <p class="em-verify-msg">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#12B76A" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#12B76A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Verification code sent to <strong id="sms-sent-to"></strong>
+        </p>
+        <div class="em-field">
+          <label class="em-field-label">Enter the 6-digit code</label>
+          <div class="em-otp-row" id="sms-otp-row">
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+            <input type="text" class="em-otp-input" maxlength="1" inputmode="numeric" />
+          </div>
+        </div>
+        <p class="em-resend">Didn't receive a code? <a onclick="resendSmsOtp()">Resend code</a></p>
+      </div>
+    </div>
+    <div class="em-modal-footer">
+      <button class="modal-cancel-btn" onclick="closeSmsOtpModal();">Cancel</button>
+      <button class="modal-primary-btn" id="sms-verify-btn" onclick="verifySmsOtp();" style="display:none;">Verify</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORKSTATION PAIR MODAL -->
+<div class="ws-modal-backdrop" id="ws-pair-modal" onclick="closeWsPairModal()">
+  <div class="em-modal" onclick="event.stopPropagation();" style="max-width:584px;">
+    <div class="em-modal-header">
+      <h3>Pair new workstation</h3>
+      <button class="em-modal-close" onclick="closeWsPairModal();" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="em-modal-body">
+      <div class="ws-content-row">
+        <div class="ws-icon-pill">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8M12 17v4"/>
+            <path d="M9 11l2 2 4-4"/>
+          </svg>
+          <svg class="ws-cursor-badge" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3l9.286 20L15.429 13.714 22 10.571z"/>
+          </svg>
+        </div>
+        <div class="ws-text-col">
+          <p class="ws-text-main">Clicking the link below will register this device as a workstation on your account.</p>
+          <p class="ws-text-note">The link will only work if the device has <span class="ws-highlight">DeviceTrust agent</span> installed.</p>
+        </div>
+      </div>
+    </div>
+    <div class="em-modal-footer">
+      <button class="modal-cancel-btn" onclick="closeWsPairModal();">Cancel</button>
+      <button class="modal-primary-btn" onclick="pairWorkstation();">Pair this device</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAIR NEW DEVICE MODAL (SecureAuth Authenticate) -->
+<div class="dp-modal-backdrop" id="dp-pair-modal" onclick="closeDevicePairModal()">
+  <div class="em-modal" onclick="event.stopPropagation();" style="max-width:584px;">
+    <div class="em-modal-header">
+      <h3>Pair new device</h3>
+      <button class="em-modal-close" onclick="closeDevicePairModal();" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="em-modal-body" style="display:flex;flex-direction:column;align-items:center;">
+      <p class="dp-desc">Pair your SecureAuth Authenticate app to receive push notifications, codes, and other verification methods.</p>
+      <div class="dp-qr-wrapper">
+        <div class="dp-qr-code">
+          <svg viewBox="0 0 241 241" xmlns="http://www.w3.org/2000/svg">
+            <rect width="241" height="241" fill="#fff"/>
+            <!-- QR finder patterns (top-left) -->
+            <rect x="16" y="16" width="50" height="50" rx="4" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="24" y="24" width="34" height="34" rx="2" fill="#000"/>
+            <!-- QR finder patterns (top-right) -->
+            <rect x="175" y="16" width="50" height="50" rx="4" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="183" y="24" width="34" height="34" rx="2" fill="#000"/>
+            <!-- QR finder patterns (bottom-left) -->
+            <rect x="16" y="175" width="50" height="50" rx="4" fill="none" stroke="#000" stroke-width="4"/>
+            <rect x="24" y="183" width="34" height="34" rx="2" fill="#000"/>
+            <!-- QR data pattern (simulated) -->
+            <rect x="80" y="16" width="8" height="8" fill="#000"/><rect x="96" y="16" width="8" height="8" fill="#000"/><rect x="112" y="16" width="8" height="8" fill="#000"/><rect x="128" y="16" width="8" height="8" fill="#000"/><rect x="144" y="16" width="8" height="8" fill="#000"/><rect x="160" y="16" width="8" height="8" fill="#000"/>
+            <rect x="80" y="32" width="8" height="8" fill="#000"/><rect x="104" y="32" width="8" height="8" fill="#000"/><rect x="136" y="32" width="8" height="8" fill="#000"/><rect x="160" y="32" width="8" height="8" fill="#000"/>
+            <rect x="80" y="48" width="8" height="8" fill="#000"/><rect x="96" y="48" width="8" height="8" fill="#000"/><rect x="120" y="48" width="8" height="8" fill="#000"/><rect x="144" y="48" width="8" height="8" fill="#000"/>
+            <rect x="16" y="80" width="8" height="8" fill="#000"/><rect x="32" y="80" width="8" height="8" fill="#000"/><rect x="56" y="80" width="8" height="8" fill="#000"/><rect x="80" y="80" width="8" height="8" fill="#000"/><rect x="104" y="80" width="8" height="8" fill="#000"/><rect x="128" y="80" width="8" height="8" fill="#000"/><rect x="152" y="80" width="8" height="8" fill="#000"/><rect x="176" y="80" width="8" height="8" fill="#000"/><rect x="200" y="80" width="8" height="8" fill="#000"/><rect x="216" y="80" width="8" height="8" fill="#000"/>
+            <rect x="16" y="96" width="8" height="8" fill="#000"/><rect x="48" y="96" width="8" height="8" fill="#000"/><rect x="72" y="96" width="8" height="8" fill="#000"/><rect x="96" y="96" width="8" height="8" fill="#000"/><rect x="120" y="96" width="8" height="8" fill="#000"/><rect x="160" y="96" width="8" height="8" fill="#000"/><rect x="192" y="96" width="8" height="8" fill="#000"/><rect x="216" y="96" width="8" height="8" fill="#000"/>
+            <rect x="16" y="112" width="8" height="8" fill="#000"/><rect x="32" y="112" width="8" height="8" fill="#000"/><rect x="64" y="112" width="8" height="8" fill="#000"/><rect x="88" y="112" width="8" height="8" fill="#000"/><rect x="112" y="112" width="8" height="8" fill="#000"/><rect x="144" y="112" width="8" height="8" fill="#000"/><rect x="168" y="112" width="8" height="8" fill="#000"/><rect x="200" y="112" width="8" height="8" fill="#000"/>
+            <rect x="16" y="128" width="8" height="8" fill="#000"/><rect x="48" y="128" width="8" height="8" fill="#000"/><rect x="80" y="128" width="8" height="8" fill="#000"/><rect x="104" y="128" width="8" height="8" fill="#000"/><rect x="136" y="128" width="8" height="8" fill="#000"/><rect x="160" y="128" width="8" height="8" fill="#000"/><rect x="184" y="128" width="8" height="8" fill="#000"/><rect x="216" y="128" width="8" height="8" fill="#000"/>
+            <rect x="16" y="144" width="8" height="8" fill="#000"/><rect x="32" y="144" width="8" height="8" fill="#000"/><rect x="56" y="144" width="8" height="8" fill="#000"/><rect x="80" y="144" width="8" height="8" fill="#000"/><rect x="112" y="144" width="8" height="8" fill="#000"/><rect x="128" y="144" width="8" height="8" fill="#000"/><rect x="152" y="144" width="8" height="8" fill="#000"/><rect x="176" y="144" width="8" height="8" fill="#000"/><rect x="208" y="144" width="8" height="8" fill="#000"/>
+            <rect x="80" y="160" width="8" height="8" fill="#000"/><rect x="96" y="160" width="8" height="8" fill="#000"/><rect x="128" y="160" width="8" height="8" fill="#000"/><rect x="160" y="160" width="8" height="8" fill="#000"/><rect x="184" y="160" width="8" height="8" fill="#000"/><rect x="216" y="160" width="8" height="8" fill="#000"/>
+            <rect x="80" y="176" width="8" height="8" fill="#000"/><rect x="112" y="176" width="8" height="8" fill="#000"/><rect x="136" y="176" width="8" height="8" fill="#000"/><rect x="152" y="176" width="8" height="8" fill="#000"/><rect x="184" y="176" width="8" height="8" fill="#000"/><rect x="200" y="176" width="8" height="8" fill="#000"/>
+            <rect x="80" y="192" width="8" height="8" fill="#000"/><rect x="96" y="192" width="8" height="8" fill="#000"/><rect x="120" y="192" width="8" height="8" fill="#000"/><rect x="144" y="192" width="8" height="8" fill="#000"/><rect x="168" y="192" width="8" height="8" fill="#000"/><rect x="192" y="192" width="8" height="8" fill="#000"/><rect x="216" y="192" width="8" height="8" fill="#000"/>
+            <rect x="80" y="208" width="8" height="8" fill="#000"/><rect x="104" y="208" width="8" height="8" fill="#000"/><rect x="128" y="208" width="8" height="8" fill="#000"/><rect x="160" y="208" width="8" height="8" fill="#000"/><rect x="200" y="208" width="8" height="8" fill="#000"/>
+            <!-- Center logo area -->
+            <rect x="100" y="100" width="41" height="41" rx="6" fill="#fff"/>
+            <circle cx="120.5" cy="120.5" r="14" fill="none" stroke="#196CD6" stroke-width="2"/>
+            <path d="M116 122c0-2.2 1.5-4.7 4.5-6 3 1.3 4.5 3.8 4.5 6 0 1.8-1.5 3.2-4.5 3.2s-4.5-1.4-4.5-3.2z" fill="#196CD6" opacity="0.3" stroke="#196CD6" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+      <div class="dp-store-links">
+        <a href="https://apps.apple.com/app/secureauth-authenticate" target="_blank" rel="noopener" title="Download on the App Store">
+          <svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+            <rect width="120" height="40" rx="6" fill="#000"/>
+            <text x="60" y="14" text-anchor="middle" fill="#fff" font-family="Inter,sans-serif" font-size="7" font-weight="400">Download on the</text>
+            <text x="60" y="28" text-anchor="middle" fill="#fff" font-family="Inter,sans-serif" font-size="13" font-weight="600">App Store</text>
+            <g transform="translate(14,10)" fill="#fff">
+              <path d="M7.5 0C7.5 0 8.2 1.3 8.2 2.8c0 1.6-1 2.6-2 3.3.8.9 1.8 2.1 1.8 3.8 0 2.3-1.4 4.1-3.5 4.1-1 0-1.7-.4-2.5-.4s-1.6.4-2.5.4C-.5 14-.5 10.8 1.5 8.5c.5-.6 1.2-1.3 2-1.3.7 0 1.3.4 2 .4s1.2-.4 2-.6c-1-.6-1.8-1.6-1.8-3C5.7 2.5 6.8.8 7.5 0z" transform="scale(0.9)"/>
+            </g>
+          </svg>
+        </a>
+        <a href="https://play.google.com/store/apps/details?id=com.secureauth.authenticate" target="_blank" rel="noopener" title="Get it on Google Play">
+          <svg width="135" height="40" viewBox="0 0 135 40" xmlns="http://www.w3.org/2000/svg">
+            <rect width="135" height="40" rx="6" fill="#000"/>
+            <text x="74" y="14" text-anchor="middle" fill="#fff" font-family="Inter,sans-serif" font-size="7" font-weight="400">GET IT ON</text>
+            <text x="74" y="28" text-anchor="middle" fill="#fff" font-family="Inter,sans-serif" font-size="13" font-weight="600">Google Play</text>
+            <g transform="translate(12,8)">
+              <path d="M2 1.5L14 12 2 22.5V1.5z" fill="#4285F4"/>
+              <path d="M2 1.5l12 10.5-4 3.5L2 8V1.5z" fill="#34A853"/>
+              <path d="M2 22.5l8-7.5 4 3.5L2 22.5z" fill="#EA4335"/>
+              <path d="M14 12l4-3.5V15.5L14 12z" fill="#FBBC04"/>
+            </g>
+          </svg>
+        </a>
+      </div>
+      <div class="dp-waiting" id="dp-waiting">
+        <div class="dp-spinner"></div>
+        <span>Waiting for device to connect…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESET ALL SECUREAUTH AUTHENTICATE MODAL -->
+<div class="dp-reset-backdrop" id="dp-reset-modal" onclick="closeDeviceResetModal()">
+  <div class="em-modal" onclick="event.stopPropagation();" style="max-width:584px;">
+    <div class="dp-reset-header">
+      <div class="dp-reset-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <h3>Reset all SecureAuth Authenticate</h3>
+    </div>
+    <div class="dp-reset-body">
+      <p>Are you sure you want to reset all instances of SecureAuth Authenticate at once? This action cannot be undone.</p>
+    </div>
+    <div class="em-modal-footer">
+      <button class="modal-cancel-btn-dark" onclick="closeDeviceResetModal();">Cancel</button>
+      <button class="modal-danger-btn" onclick="resetAllDevices();">Yes</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
