@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureAuth Connect — Security (Proposal A: Clean & Minimal)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FFFFFF;
+    --bg-subtle: #F9FAFB;
+    --border: #EAECF0;
+    --border-dark: #D0D5DD;
+    --text-primary: #101828;
+    --text-secondary: #344054;
+    --text-tertiary: #475467;
+    --text-muted: #667085;
+    --text-placeholder: #98A2B3;
+    --primary: #1570EF;
+    --primary-hover: #1259c4;
+    --primary-light: #EFF8FF;
+    --primary-border: #B2DDFF;
+    --success: #12B76A;
+    --success-light: #ECFDF3;
+    --success-border: #ABEFC6;
+    --warning: #F79009;
+    --warning-light: #FFFAEB;
+    --warning-border: #FEDF89;
+    --danger: #F04438;
+    --danger-light: #FEF3F2;
+    --danger-border: #FECDCA;
+    --nav-bg: #0C111D;
+    --nav-text: #CECFD2;
+    --nav-active: #FFFFFF;
+    --nav-hover: #1D2939;
+    --shadow-xs: 0 1px 2px rgba(16,24,40,0.05);
+    --shadow-sm: 0 1px 3px rgba(16,24,40,0.1), 0 1px 2px rgba(16,24,40,0.06);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+    line-height: 1.5;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ===== GLOBAL HEADER ===== */
+  .global-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--nav-bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 20;
+  }
+  .global-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .global-header-logo svg { flex-shrink: 0; }
+  .global-header-logo span {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .global-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 600;
+  }
+
+  /* ===== LEFT NAV ===== */
+  .nav {
+    width: 240px;
+    position: fixed;
+    left: 0;
+    top: 56px;
+    bottom: 0;
+    background: #FFFFFF;
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+  }
+  .nav-items { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: var(--text-tertiary);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.15s;
+    cursor: pointer;
+    border-right: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text-primary); background: var(--bg-subtle); }
+  .nav-item.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    border-right-color: var(--primary);
+  }
+  .nav-item svg { flex-shrink: 0; width: 22px; height: 22px; }
+  .nav-item.active svg { stroke: var(--primary); }
+
+  /* ===== MAIN CONTENT ===== */
+  .main {
+    margin-left: 240px;
+    margin-top: 56px;
+    flex: 1;
+    min-height: calc(100vh - 56px);
+    background: var(--bg);
+  }
+
+  /* Top bar (sub-header) */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 56px;
+    z-index: 5;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-toggle:hover { border-color: var(--primary); color: var(--primary); }
+  .mode-toggle.workforce { background: var(--primary-light); border-color: var(--primary-border); color: var(--primary); }
+
+  /* Content area */
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .page-header h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  .page-header p { font-size: 14px; color: var(--text-tertiary); }
+
+  /* ===== SECURITY BANNER ===== */
+  .security-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    gap: 16px;
+  }
+  .security-banner.green {
+    background: var(--success-light);
+    border: 1px solid var(--success-border);
+  }
+  .security-banner.amber {
+    background: var(--warning-light);
+    border: 1px solid var(--warning-border);
+  }
+  .security-banner.red {
+    background: var(--danger-light);
+    border: 1px solid var(--danger-border);
+  }
+  .banner-left { display: flex; align-items: center; gap: 14px; flex: 1; }
+  .banner-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .security-banner.green .banner-icon { background: var(--success); }
+  .security-banner.amber .banner-icon { background: var(--warning); }
+  .security-banner.red .banner-icon { background: var(--danger); }
+  .banner-icon svg { color: #fff; }
+  .banner-text h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .banner-text p { font-size: 13px; color: var(--text-tertiary); margin-top: 2px; }
+  .banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid var(--border-dark);
+    background: var(--bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .btn:hover { background: var(--bg-subtle); border-color: var(--text-muted); }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  .btn-danger-ghost {
+    background: transparent;
+    color: var(--danger);
+    border-color: transparent;
+    padding: 8px 10px;
+  }
+  .btn-danger-ghost:hover { background: var(--danger-light); }
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    padding: 0;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-link:hover { text-decoration: underline; }
+  .btn-setup {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary-border);
+  }
+  .btn-setup:hover { background: #DBEAFE; }
+
+  /* ===== SECTIONS ===== */
+  .section {
+    margin-bottom: 32px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+    cursor: pointer;
+  }
+  .section-header-left { display: flex; align-items: center; gap: 8px; }
+  .section-header h2 { font-size: 16px; font-weight: 600; }
+  .section-header p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .section-count {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .section-header-right { display: flex; align-items: center; gap: 12px; }
+  .chevron {
+    transition: transform 0.2s;
+    color: var(--text-muted);
+  }
+  .section.collapsed .chevron { transform: rotate(-90deg); }
+  .section.collapsed .section-body { display: none; }
+
+  /* ===== METHOD ROWS ===== */
+  .method-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .method-row:hover { background: var(--bg-subtle); border-radius: 8px; }
+  .method-row:last-child { border-bottom: none; }
+  .method-chevron { flex-shrink: 0; color: var(--text-placeholder); margin-left: 8px; transition: transform 0.2s; }
+  .method-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-muted);
+  }
+  .method-info { flex: 1; min-width: 0; }
+  .method-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .method-desc { font-size: 13px; color: var(--text-muted); margin-top: 1px; }
+  .method-tech { font-size: 12px; color: var(--text-placeholder); display: none; }
+  body.workforce .method-tech { display: block; }
+  .method-status { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .method-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-success { background: var(--success-light); color: #067647; border: 1px solid var(--success-border); }
+  .badge-warning { background: var(--warning-light); color: #B54708; border: 1px solid var(--warning-border); }
+  .badge-danger { background: var(--danger-light); color: #B42318; border: 1px solid var(--danger-border); }
+  .badge-neutral { background: var(--bg-subtle); color: var(--text-muted); border: 1px solid var(--border); }
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .badge-success .badge-dot { background: var(--success); }
+  .badge-warning .badge-dot { background: var(--warning); }
+  .badge-danger .badge-dot { background: var(--danger); }
+
+  /* Password strength */
+  .password-strength {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .password-dots {
+    letter-spacing: 1px;
+    font-size: 16px;
+    color: var(--text-primary);
+  }
+
+  /* Toggle switch */
+  .toggle {
+    width: 44px; height: 24px;
+    background: var(--border-dark);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.active { background: var(--primary); }
+  .toggle::after {
+    content: '';
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left 0.2s;
+    box-shadow: var(--shadow-xs);
+  }
+  .toggle.active::after { left: 22px; }
+
+  /* ===== DEVICE NESTED ROW ===== */
+  .device-nested {
+    margin-left: 54px;
+    padding: 12px 16px;
+    background: var(--bg-subtle);
+    border-left: 3px solid var(--border);
+    border-radius: 0 8px 8px 0;
+    margin-top: -1px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .device-nested .device-info { flex: 1; }
+  .device-nested .device-name { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+  .device-nested .device-meta { font-size: 12px; color: var(--text-muted); }
+
+  /* Warning inline */
+  .warning-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--warning-light);
+    border: 1px solid var(--warning-border);
+    border-radius: 8px;
+    margin-left: 54px;
+    margin-top: -1px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #B54708;
+  }
+  .warning-inline .warning-actions { margin-left: auto; display: flex; gap: 8px; }
+
+  /* ===== SESSIONS ===== */
+  .session-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 14px;
+  }
+  .session-row:last-child { border-bottom: none; }
+  .session-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .session-info { flex: 1; }
+  .session-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .session-meta { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+  .session-flag { font-size: 14px; }
+  .session-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+    color: var(--text-placeholder);
+  }
+  .empty-state h4 { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+  .empty-state p { font-size: 13px; margin-bottom: 16px; }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--nav-bg);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast-actions { display: flex; gap: 12px; margin-left: 8px; }
+  .toast-actions button {
+    background: none; border: none; color: #94A3B8;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit;
+  }
+  .toast-actions button.undo { color: var(--primary); }
+
+  /* ===== UTILITY ===== */
+  .divider { height: 1px; background: var(--border); margin: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  .sub-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 0 8px; }
+
+  /* Highlight pulse for CTA scroll target */
+  @keyframes highlightPulse {
+    0% { background: transparent; box-shadow: none; }
+    15% { background: var(--danger-light); box-shadow: 0 0 0 4px var(--danger-border); }
+    100% { background: transparent; box-shadow: none; }
+  }
+  .method-row.highlight {
+    animation: highlightPulse 2.5s ease-out;
+    border-radius: 8px;
+  }
+
+  /* ===== PROGRESS SEGMENTS & METHOD CHIPS ===== */
+  .progress-segments { display: flex; gap: 4px; margin-bottom: 16px; }
+  .progress-seg { flex: 1; height: 6px; border-radius: 3px; background: var(--border); }
+  .progress-seg.filled { background: var(--success); }
+  .progress-seg.warning { background: var(--warning); }
+  .progress-seg.danger { background: var(--danger); }
+
+  .method-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .method-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--bg-white);
+  }
+  .method-chip.enrolled { border-color: var(--success-border); background: var(--success-light); color: #065F46; }
+  .method-chip.not-enrolled {
+    border-color: var(--danger-border); background: var(--danger-light); color: #B42318;
+    cursor: pointer;
+  }
+  .method-chip.not-enrolled:hover { box-shadow: 0 0 0 2px var(--danger-border); }
+  .chip-icon { width: 14px; height: 14px; }
+
+  .banner-detail { width: 100%; padding-top: 16px; border-top: 1px solid rgba(0,0,0,0.08); }
+
+  /* ===== METHOD DETAIL PANELS ===== */
+  .method-detail {
+    display: none;
+    background: #FFFFFF;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.06);
+  }
+  .method-detail.open {
+    display: flex;
+    gap: 80px;
+    animation: slideDown 0.2s ease;
+  }
+  .method-detail-col { display: flex; flex-direction: column; gap: 8px; }
+  .method-detail-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #9EA1B7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .method-detail-value { font-size: 13px; color: #212533; }
+  .method-detail-table { width: 100%; border-collapse: collapse; }
+  .method-detail-table th {
+    text-align: left; font-size: 11px; font-weight: 500;
+    color: #9EA1B7; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .method-detail-table td {
+    font-size: 13px; color: #212533;
+    padding: 12px; border-bottom: 1px solid var(--border);
+  }
+  .method-detail-table .btn-icon-delete {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); padding: 4px; font-size: 16px;
+  }
+  .method-detail-table .btn-icon-delete:hover { color: var(--danger); }
+  .method-detail-footer { display: flex; justify-content: flex-end; padding: 12px 0 0; }
+  .method-row.expanded { background: #FCFCFF; }
+  .method-row.expanded .method-chevron { transform: rotate(90deg); }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== SECURITY QUESTIONS (Workforce only) ===== */
+  .workforce-only { display: none; }
+  body.workforce .workforce-only { display: block; }
+  .sq-helper { font-size: 12px; color: #626576; line-height: 16px; margin-bottom: 16px; }
+  .sq-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 4px;
+    padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: flex-end;
+  }
+  .sq-field { width: 100%; max-width: 500px; }
+  .sq-field-label { font-size: 12px; font-weight: 600; color: #212533; margin-bottom: 8px; }
+  .sq-field-input {
+    display: flex; align-items: center; width: 100%;
+    background: #FCFCFF; border: 1px solid #9EA1B7; border-radius: 4px;
+    padding: 12px; font-size: 14px; color: #626576; position: relative;
+  }
+  .sq-field-input input {
+    border: none; background: transparent; flex: 1; font-size: 14px; color: #626576;
+    outline: none; font-family: inherit;
+  }
+  .sq-field-input .sq-toggle-vis {
+    background: none; border: none; cursor: pointer; color: #9EA1B7; padding: 0 0 0 8px;
+    display: flex; align-items: center;
+  }
+  .sq-field-input .sq-toggle-vis:hover { color: #626576; }
+  .sq-save-btn {
+    border: 1px solid var(--primary); background: transparent; color: var(--primary);
+    border-radius: 4px; padding: 8px 16px; font-size: 14px; cursor: pointer;
+    font-family: inherit;
+  }
+  .sq-save-btn:hover { background: var(--primary-light); }
+
+  /* TOTP Detail Layout */
+  #detail-totp.open { padding: 0; }
+  .totp-detail-layout {
+    display: flex; gap: 32px; padding: 24px 24px 24px 24px;
+  }
+  .totp-qr-thumb {
+    width: 160px; height: 160px; flex-shrink: 0; border-radius: 5px; cursor: pointer;
+    position: relative; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06);
+    background: #fff;
+  }
+  .totp-qr-thumb svg, .totp-qr-thumb img { width: 100%; height: 100%; display: block; transition: opacity 0.2s; }
+  .totp-qr-thumb::after {
+    content: ''; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23212533' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3Cline x1='11' y1='8' x2='11' y2='14'/%3E%3Cline x1='8' y1='11' x2='14' y2='11'/%3E%3C/svg%3E") no-repeat center center;
+    background-color: rgba(255,255,255,0.85); background-size: 32px;
+  }
+  .totp-qr-thumb:hover svg, .totp-qr-thumb:hover img { opacity: 0.4; }
+  .totp-qr-thumb:hover::after { opacity: 1; }
+  .totp-content { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 160px; }
+  .totp-content-title { font-size: 14px; font-weight: 700; color: #212533; margin: 0 0 8px 0; }
+  .totp-content-desc { font-size: 12px; color: #626576; line-height: 1.5; margin: 0 0 16px 0; }
+  .totp-manual-hint { font-size: 12px; color: #535862; margin: 0 0 8px 0; }
+  .totp-key-box {
+    display: flex; width: 330px; max-width: 100%; background: #FBFCFD;
+    border: 1px solid #CECECE; border-radius: 4px; overflow: hidden;
+  }
+  .totp-key-value {
+    flex: 1; font-size: 12px; font-weight: 600; color: #0D1F32; padding: 8px 12px;
+    border: none; background: transparent; outline: none; font-family: inherit;
+  }
+  .totp-key-copy {
+    width: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    border: none; border-left: 1px solid #CECECE; background: transparent; cursor: pointer;
+    color: #626576; transition: background 0.15s, color 0.15s;
+  }
+  .totp-key-copy:hover { background: #F0F1F3; color: #212533; }
+
+  /* TOTP Modal */
+  .totp-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .totp-modal-backdrop.open { display: flex; }
+  .totp-modal {
+    background: #fff; border-radius: 4px; width: 90%; max-width: 584px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15); animation: modalIn 0.25s ease;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .totp-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; padding: 0 24px; background: #F6F7F8; border-radius: 4px 4px 0 0;
+  }
+  .totp-modal-header h3 { font-size: 16px; font-weight: 600; color: #212533; margin: 0; }
+  .totp-modal-close {
+    width: 32px; height: 32px; border: none; background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; border-radius: 4px;
+    color: #626576; transition: background 0.15s;
+  }
+  .totp-modal-close:hover { background: #E8E9EB; }
+  .totp-modal-body { padding: 24px 32px; display: flex; flex-direction: column; align-items: center; }
+  .totp-modal-desc { font-size: 12px; color: #626576; text-align: center; max-width: 500px; margin: 0 0 24px 0; line-height: 1.5; }
+  .totp-modal-qr-wrapper {
+    background: #FAFAFA; border: 1px solid #F2F3F4; border-radius: 8px 8px 0 0;
+    padding: 24px; width: 100%; display: flex; justify-content: center;
+  }
+  .totp-modal-qr-wrapper svg, .totp-modal-qr-wrapper img {
+    width: 330px; height: 330px; border-radius: 13px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.1);
+  }
+  .totp-modal-key-section {
+    background: #fff; border: 1px solid #F2F3F4; border-top: none;
+    border-radius: 0 0 4px 4px; padding: 24px; width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .totp-modal-manual-hint { font-size: 12px; color: #535862; margin: 0 0 12px 0; text-align: center; }
+
+  /* SQ Modal */
+  .sq-modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .sq-modal-backdrop.open { display: flex; }
+  .sq-modal {
+    background: #fff; border-radius: 8px; width: 100%; max-width: 560px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    animation: modalIn 0.2s ease;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .sq-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 0; margin-bottom: 4px;
+  }
+  .sq-modal-header h3 { font-size: 16px; font-weight: 600; color: #212533; margin: 0; }
+  .sq-modal-close {
+    background: none; border: none; cursor: pointer; color: #9EA1B7;
+    padding: 4px; display: flex; align-items: center; border-radius: 4px;
+  }
+  .sq-modal-close:hover { background: #f0f0f3; color: #626576; }
+  .sq-modal-body { padding: 16px 24px 24px; }
+  .sq-modal-footer {
+    display: flex; gap: 8px; justify-content: flex-end;
+    padding: 0 24px 24px;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .btn-secondary {
+    border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 4px;
+    padding: 8px 16px; font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  .btn-secondary:hover { background: #f5f5f5; }
+</style>
+</head>
+<body>
+
+<!-- GLOBAL HEADER -->
+<header class="global-header">
+  <div class="global-header-logo">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="14" stroke="#FFFFFF" stroke-width="2"/>
+      <path d="M11 17.5C11 14.5 13 11 16 9c3 2 5 5.5 5 8.5 0 2.5-2 4.5-5 4.5s-5-2-5-4.5z" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M16 9v13" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span>SecureAuth</span>
+  </div>
+  <div class="global-header-right">
+    <div class="avatar">HE</div>
+  </div>
+</header>
+
+<!-- LEFT NAV -->
+<nav class="nav">
+  <div class="nav-items">
+    <a class="nav-item" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="12" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="12" width="7" height="7" rx="1.5"/><rect x="12" y="12" width="7" height="7" rx="1.5"/></svg>
+      Application
+    </a>
+    <a class="nav-item" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="8" r="3.5"/><path d="M4.5 19c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg>
+      Profile
+    </a>
+    <a class="nav-item active" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="12" height="9" rx="2"/><path d="M7.5 10V7a3.5 3.5 0 017 0v3"/></svg>
+      Security
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- Sub-header -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">Security</span>
+    </div>
+    <div class="topbar-right">
+      <button class="mode-toggle" id="modeToggle" onclick="toggleMode()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M7 2v10M2 7h10"/></svg>
+        <span id="modeLabel">CIAM mode</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Page header -->
+    <div class="page-header">
+      <h1>Security</h1>
+      <p>Manage your sign-in methods, sessions, and account protection</p>
+    </div>
+
+    <!-- ===== ACCOUNT PROTECTION BANNER ===== -->
+    <div class="security-banner amber" id="securityBanner">
+      <div class="banner-left">
+        <div class="banner-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l6 3v4c0 4.4-2.6 8.5-6 10-3.4-1.5-6-5.6-6-10V5l6-3z"/></svg>
+        </div>
+        <div class="banner-text">
+          <h3>Recommended: add a backup sign-in method</h3>
+          <p>You have 4 of 7 available methods set up. Adding a backup method improves account recovery.</p>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <button class="btn" onclick="dismissBanner()">Dismiss</button>
+        <button class="btn btn-primary" onclick="reviewSecurity()">Review security</button>
+      </div>
+      <div class="banner-detail">
+        <div class="progress-segments">
+          <div class="progress-seg filled"></div>
+          <div class="progress-seg filled"></div>
+          <div class="progress-seg filled"></div>
+          <div class="progress-seg filled"></div>
+          <div class="progress-seg danger"></div>
+          <div class="progress-seg danger"></div>
+          <div class="progress-seg danger"></div>
+        </div>
+        <div class="method-chips">
+          <span class="method-chip enrolled" data-method="method-password">
+            <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+            <span data-ciam="Password" data-workforce="Password">Password</span>
+          </span>
+          <span class="method-chip enrolled" data-method="method-totp">
+            <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+            <span data-ciam="TOTP" data-workforce="TOTP">TOTP</span>
+          </span>
+          <span class="method-chip not-enrolled" onclick="scrollToMethod('method-push')" data-method="method-push">
+            <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5.5 5.5l3 3M8.5 5.5l-3 3"/></svg>
+            <span data-ciam="Push" data-workforce="Push">Push</span>
+          </span>
+          <span class="method-chip not-enrolled" onclick="scrollToMethod('method-symbol')" data-method="method-symbol">
+            <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5.5 5.5l3 3M8.5 5.5l-3 3"/></svg>
+            <span data-ciam="Symbol" data-workforce="Symbol">Symbol</span>
+          </span>
+          <span class="method-chip enrolled" data-method="method-email">
+            <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+            <span data-ciam="Email OTP" data-workforce="Email OTP">Email OTP</span>
+          </span>
+          <span class="method-chip enrolled" data-method="method-sms">
+            <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5 7l1.5 1.5L9 5.5"/></svg>
+            <span data-ciam="SMS OTP" data-workforce="SMS OTP">SMS OTP</span>
+          </span>
+          <span class="method-chip not-enrolled" onclick="scrollToMethod('method-passkey')" data-method="method-passkey">
+            <svg class="chip-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M5.5 5.5l3 3M8.5 5.5l-3 3"/></svg>
+            <span data-ciam="Passkey" data-workforce="Passkey">Passkey</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SIGN-IN METHODS ===== -->
+    <div class="section" id="methods">
+      <div class="section-header" onclick="toggleSection('methods')">
+        <div>
+          <div class="section-header-left">
+            <h2>Sign In methods</h2>
+            <span class="section-count">4 enrolled</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Set up and manage sign-in methods</p>
+        </div>
+        <div class="section-header-right">
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="section-body">
+        <!-- Password -->
+        <div class="method-row" id="method-password" onclick="toggleDetail('detail-password')">
+          <div class="method-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="10" height="8" rx="1.5"/><path d="M7 9V6a3 3 0 016 0v3"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Password" data-workforce="Password">Password</div>
+            <div class="method-desc">Your primary credentials for signing in</div>
+          </div>
+          <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+          <div class="method-actions">
+            <button class="btn" onclick="event.stopPropagation();">Change</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-password">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Last updated</span>
+            <span class="method-detail-value">Sep 18, 2025, 14:34:43</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Expires</span>
+            <span class="method-detail-value">Never</span>
+          </div>
+        </div>
+
+        <!-- TOTP -->
+        <div class="method-row" id="method-totp" onclick="toggleDetail('detail-totp')">
+          <div class="method-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="12" height="12" rx="2"/><path d="M10 7v3l2 1"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="TOTP" data-workforce="TOTP">TOTP</div>
+            <div class="method-desc">Time-based codes from SecureAuth Authenticate or Google Authenticator</div>
+          </div>
+          <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+          <div class="method-actions">
+            <button class="btn" onclick="event.stopPropagation();">+ Add</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-totp">
+          <div class="totp-detail-layout">
+            <div class="totp-qr-thumb" onclick="event.stopPropagation(); openTotpModal();" title="Click to enlarge">
+              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="200" fill="#fff"/>
+                <!-- Finder patterns (top-left, top-right, bottom-left) -->
+                <rect x="16" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+                <rect x="22" y="22" width="36" height="36" rx="2" fill="#fff"/>
+                <rect x="28" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+                <rect x="136" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+                <rect x="142" y="22" width="36" height="36" rx="2" fill="#fff"/>
+                <rect x="148" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+                <rect x="16" y="136" width="48" height="48" rx="4" fill="#0D1F32"/>
+                <rect x="22" y="142" width="36" height="36" rx="2" fill="#fff"/>
+                <rect x="28" y="148" width="24" height="24" rx="2" fill="#0D1F32"/>
+                <!-- Data modules -->
+                <rect x="72" y="16" width="8" height="8" fill="#0D1F32"/><rect x="88" y="16" width="8" height="8" fill="#0D1F32"/>
+                <rect x="104" y="16" width="8" height="8" fill="#0D1F32"/><rect x="72" y="32" width="8" height="8" fill="#0D1F32"/>
+                <rect x="96" y="32" width="8" height="8" fill="#0D1F32"/><rect x="112" y="32" width="8" height="8" fill="#0D1F32"/>
+                <rect x="80" y="48" width="8" height="8" fill="#0D1F32"/><rect x="104" y="48" width="8" height="8" fill="#0D1F32"/>
+                <rect x="72" y="72" width="8" height="8" fill="#0D1F32"/><rect x="88" y="72" width="8" height="8" fill="#0D1F32"/>
+                <rect x="112" y="72" width="8" height="8" fill="#0D1F32"/><rect x="136" y="72" width="8" height="8" fill="#0D1F32"/>
+                <rect x="160" y="72" width="8" height="8" fill="#0D1F32"/><rect x="16" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="40" y="80" width="8" height="8" fill="#0D1F32"/><rect x="80" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="104" y="80" width="8" height="8" fill="#0D1F32"/><rect x="128" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="152" y="80" width="8" height="8" fill="#0D1F32"/><rect x="176" y="80" width="8" height="8" fill="#0D1F32"/>
+                <rect x="24" y="96" width="8" height="8" fill="#0D1F32"/><rect x="48" y="96" width="8" height="8" fill="#0D1F32"/>
+                <rect x="72" y="96" width="8" height="8" fill="#0D1F32"/><rect x="96" y="96" width="8" height="8" fill="#0D1F32"/>
+                <rect x="120" y="96" width="8" height="8" fill="#0D1F32"/><rect x="144" y="96" width="8" height="8" fill="#0D1F32"/>
+                <rect x="168" y="96" width="8" height="8" fill="#0D1F32"/><rect x="16" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="40" y="112" width="8" height="8" fill="#0D1F32"/><rect x="56" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="88" y="112" width="8" height="8" fill="#0D1F32"/><rect x="120" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="152" y="112" width="8" height="8" fill="#0D1F32"/><rect x="176" y="112" width="8" height="8" fill="#0D1F32"/>
+                <rect x="72" y="128" width="8" height="8" fill="#0D1F32"/><rect x="96" y="128" width="8" height="8" fill="#0D1F32"/>
+                <rect x="120" y="128" width="8" height="8" fill="#0D1F32"/><rect x="144" y="128" width="8" height="8" fill="#0D1F32"/>
+                <rect x="168" y="128" width="8" height="8" fill="#0D1F32"/><rect x="80" y="144" width="8" height="8" fill="#0D1F32"/>
+                <rect x="104" y="144" width="8" height="8" fill="#0D1F32"/><rect x="136" y="144" width="8" height="8" fill="#0D1F32"/>
+                <rect x="160" y="144" width="8" height="8" fill="#0D1F32"/><rect x="72" y="160" width="8" height="8" fill="#0D1F32"/>
+                <rect x="96" y="160" width="8" height="8" fill="#0D1F32"/><rect x="112" y="160" width="8" height="8" fill="#0D1F32"/>
+                <rect x="144" y="160" width="8" height="8" fill="#0D1F32"/><rect x="176" y="160" width="8" height="8" fill="#0D1F32"/>
+                <rect x="80" y="176" width="8" height="8" fill="#0D1F32"/><rect x="104" y="176" width="8" height="8" fill="#0D1F32"/>
+                <rect x="128" y="176" width="8" height="8" fill="#0D1F32"/><rect x="152" y="176" width="8" height="8" fill="#0D1F32"/>
+              </svg>
+            </div>
+            <div class="totp-content">
+              <div>
+                <h4 class="totp-content-title">Use an authenticator app to scan</h4>
+                <p class="totp-content-desc">Scan this QR code with any authenticator app (like SecureAuth Authenticate or Google Authenticator) to generate time-based one-time passcodes (TOTP).</p>
+              </div>
+              <div>
+                <p class="totp-manual-hint">Can't scan the code? Enter the key manually.</p>
+                <div class="totp-key-box">
+                  <input class="totp-key-value" type="text" readonly value="QSXHYNVN6IXWJMDFHRE5S2JCMHTG7GLE"/>
+                  <button class="totp-key-copy" onclick="event.stopPropagation(); copyTotpKey(this);" title="Copy key">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Symbol -->
+        <div class="method-row" id="method-symbol" onclick="toggleDetail('detail-symbol')">
+          <div class="method-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><path d="M10 7v0M8 13h4"/><circle cx="10" cy="10" r="1"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Symbol" data-workforce="Symbol">Symbol</div>
+            <div class="method-desc">Match a symbol on your phone to approve sign-in</div>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-symbol">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Name</span>
+            <span class="method-detail-value">iPhone 12 Pro iOS 11.5</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Access date</span>
+            <span class="method-detail-value">January 12 at 4:29 PM</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Status</span>
+            <span class="badge badge-danger"><span class="badge-dot"></span> Failed</span>
+          </div>
+        </div>
+
+        <!-- Push -->
+        <div class="method-row" id="method-push" onclick="toggleDetail('detail-push')">
+          <div class="method-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H8a2 2 0 00-2 2v10a2 2 0 002 2h4a2 2 0 002-2V5a2 2 0 00-2-2z"/><path d="M10 14h.01"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Push" data-workforce="Push">Push</div>
+            <div class="method-desc">Approve sign-ins from the SecureAuth Authenticate mobile app</div>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-push">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Name</span>
+            <span class="method-detail-value">iPhone 12 Pro iOS 11.5</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Access date</span>
+            <span class="method-detail-value">January 12 at 4:02 PM</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Status</span>
+            <span class="badge badge-danger"><span class="badge-dot"></span> Failed</span>
+          </div>
+        </div>
+
+        <!-- Email OTP -->
+        <div class="method-row" id="method-email" onclick="toggleDetail('detail-email')">
+          <div class="method-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="10" rx="1.5"/><path d="M3 5l7 5 7-5"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Email OTP" data-workforce="Email OTP">Email OTP</div>
+            <div class="method-desc">Receive an OTP for your verified email address</div>
+          </div>
+          <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+          <div class="method-actions">
+            <button class="btn" onclick="event.stopPropagation();">+ Add</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-email">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Name</span>
+            <span class="method-detail-value">iPhone 12 Pro iOS 11.5</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Access date</span>
+            <span class="method-detail-value">January 12 at 4:29 PM</span>
+          </div>
+        </div>
+
+        <!-- SMS OTP -->
+        <div class="method-row" id="method-sms" onclick="toggleDetail('detail-sms')">
+          <div class="method-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="8" height="14" rx="1.5"/><line x1="10" y1="14" x2="10" y2="14.01"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="SMS OTP" data-workforce="SMS OTP">SMS OTP</div>
+            <div class="method-desc">Receive an OTP for your verified mobile address</div>
+          </div>
+          <span class="badge badge-success"><span class="badge-dot"></span> Active</span>
+          <div class="method-actions">
+            <button class="btn" onclick="event.stopPropagation();">+ Add</button>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+
+        <div class="method-detail" id="detail-sms">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Name</span>
+            <span class="method-detail-value">iPhone 12 Pro iOS 11.5</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Access date</span>
+            <span class="method-detail-value">January 12 at 4:29 PM</span>
+          </div>
+        </div>
+
+        <!-- Passkey -->
+        <div class="method-row" id="method-passkey" onclick="toggleDetail('detail-passkey')">
+          <div class="method-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="3"/><path d="M13 11l2 6-2-1-2 1-.5-3"/></svg>
+          </div>
+          <div class="method-info">
+            <div class="method-name" data-ciam="Passkey" data-workforce="Passkey">Passkey</div>
+            <div class="method-desc">Phishing-resistant sign-in using biometrics or security keys</div>
+          </div>
+          <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+        </div>
+        <div class="method-detail" id="detail-passkey">
+          <div class="method-detail-col">
+            <span class="method-detail-label">Status</span>
+            <span class="badge badge-neutral"><span class="badge-dot"></span> Not configured</span>
+          </div>
+          <div class="method-detail-col">
+            <span class="method-detail-label">Available since</span>
+            <span class="method-detail-value">Jan 01, 2025</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Questions -->
+      <div class="method-row" id="method-security-q" onclick="toggleDetail('detail-security-q')">
+        <div class="method-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M7.5 8a2.5 2.5 0 0 1 4.75 1c0 1.5-2.25 2-2.25 3"/><circle cx="10" cy="14.5" r="0.5" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <div class="method-info">
+          <div class="method-name">Security questions</div>
+          <div class="method-desc">Answer personal questions as a recovery fallback</div>
+        </div>
+        <span class="badge badge-success"><span class="badge-dot"></span> 3 set</span>
+        <div class="method-actions">
+          <button class="btn" onclick="event.stopPropagation(); openSqEdit();">Change</button>
+        </div>
+        <svg class="method-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+      </div>
+      <div class="method-detail" id="detail-security-q">
+        <div class="method-detail-col">
+          <span class="method-detail-label">Questions set</span>
+          <span class="method-detail-value">3 of 3</span>
+        </div>
+        <div class="method-detail-col">
+          <span class="method-detail-label">Last updated</span>
+          <span class="method-detail-value">Jan 15, 2025, 09:22:11</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ACTIVE SESSIONS ===== -->
+    <div class="section collapsed" id="sessions">
+      <div class="section-header" onclick="toggleSection('sessions')">
+        <div>
+          <div class="section-header-left">
+            <h2>Browsers and devices</h2>
+            <span class="section-count">3 sessions</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Devices currently signed in to your account. Remove any you don't recognize.</p>
+        </div>
+        <div class="section-header-right">
+          <button class="btn-link" onclick="event.stopPropagation();">Sign out all others</button>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="section-body">
+        <!-- Current session -->
+        <div class="session-row">
+          <div class="session-icon">🖥️</div>
+          <div class="session-info">
+            <div class="session-name">MacBook Pro — Safari</div>
+            <div class="session-meta">
+              <span class="session-flag">🇺🇸</span>
+              <span>San Francisco, CA</span>
+              <span>·</span>
+              <span>Active now</span>
+            </div>
+          </div>
+          <div class="session-right">
+            <span class="badge badge-success"><span class="badge-dot"></span> This device</span>
+          </div>
+        </div>
+
+        <!-- Other session -->
+        <div class="session-row">
+          <div class="session-icon">💻</div>
+          <div class="session-info">
+            <div class="session-name">MacBook Pro — Safari</div>
+            <div class="session-meta">
+              <span class="session-flag">🇺🇸</span>
+              <span>San Francisco, CA</span>
+              <span>·</span>
+              <span>3 hours ago</span>
+            </div>
+          </div>
+          <div class="session-right">
+            <span class="badge badge-neutral">Inactive</span>
+            <button class="btn-danger-ghost" onclick="showToast('Session signed out')" title="Sign out this session">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
+              Sign out
+            </button>
+          </div>
+        </div>
+
+        <!-- Old session -->
+        <div class="session-row">
+          <div class="session-icon">📱</div>
+          <div class="session-info">
+            <div class="session-name">iPhone 12 Pro — Chrome</div>
+            <div class="session-meta">
+              <span class="session-flag">🇲🇽</span>
+              <span>Mexico City, MX</span>
+              <span>·</span>
+              <span>1 month ago</span>
+            </div>
+          </div>
+          <div class="session-right">
+            <span class="badge badge-neutral">Inactive</span>
+            <button class="btn-danger-ghost" onclick="showToast('Session signed out')" title="Sign out this session">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MOBILE APP ===== -->
+    <div class="section collapsed" id="mobileApp">
+      <div class="section-header" onclick="toggleSection('mobileApp')">
+        <div>
+          <div class="section-header-left">
+            <h2>SecureAuth Authenticate app</h2>
+            <span class="section-count">1 device</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:2px;" data-ciam="Your registered phones for approving sign-ins" data-workforce="Registered devices for push and symbol verification">Your registered phones for approving sign-ins</p>
+        </div>
+        <div class="section-header-right">
+          <button class="btn btn-setup" onclick="event.stopPropagation();">+ Register a phone</button>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="session-row">
+          <div class="session-icon">📱</div>
+          <div class="session-info">
+            <div class="session-name">iPhone 12 Pro</div>
+            <div class="session-meta">
+              <span>iOS 11.5</span>
+              <span>·</span>
+              <span>Registered Jan 12, 2026</span>
+            </div>
+          </div>
+          <div class="session-right">
+            <span class="badge badge-warning"><span class="badge-dot"></span> Setup incomplete</span>
+            <button class="btn-danger-ghost" onclick="showToast('Device removed')" title="Remove device">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== WORKSTATIONS ===== -->
+    <div class="section collapsed" id="workstations">
+      <div class="section-header" onclick="toggleSection('workstations')">
+        <div>
+          <div class="section-header-left">
+            <h2>Workstations</h2>
+            <span class="section-count">0</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:2px;" data-ciam="Computers set up for quick sign-in" data-workforce="Computers paired for passwordless desktop sign-in">Computers set up for quick sign-in</p>
+        </div>
+        <div class="section-header-right">
+          <button class="btn btn-setup" onclick="event.stopPropagation();">+ Add</button>
+          <svg class="chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          </div>
+          <h4>No workstations paired</h4>
+          <p>Pair a computer for passwordless desktop sign-in with the SecureAuth Authenticate mobile app.</p>
+          <button class="btn btn-setup">+ Pair a workstation</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M6 8l1.5 1.5L10 6"/></svg>
+  <span id="toastMessage">Session signed out</span>
+  <div class="toast-actions">
+    <button onclick="hideToast()">Dismiss</button>
+    <button class="undo" onclick="hideToast()">Undo</button>
+  </div>
+</div>
+
+<script>
+  // Mode toggle
+  let isWorkforce = false;
+  function toggleMode() {
+    isWorkforce = !isWorkforce;
+    document.body.classList.toggle('workforce', isWorkforce);
+    document.getElementById('modeLabel').textContent = isWorkforce ? 'Workforce mode' : 'CIAM mode';
+    document.getElementById('modeToggle').classList.toggle('workforce', isWorkforce);
+
+    // Update labels
+    document.querySelectorAll('[data-ciam]').forEach(el => {
+      el.textContent = isWorkforce ? el.dataset.workforce : el.dataset.ciam;
+    });
+
+    // Workstations: visible in Workforce only
+    document.getElementById('workstations').style.display = isWorkforce ? '' : 'none';
+  }
+
+  // Hide workstations by default (CIAM mode is default)
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('workstations').style.display = 'none';
+  });
+
+  // Accordion toggle — only one section open at a time
+  const accordionSections = ['methods', 'sessions', 'mobileApp', 'workstations'];
+
+  function toggleSection(id) {
+    const target = document.getElementById(id);
+    const isCurrentlyCollapsed = target.classList.contains('collapsed');
+
+    // Collapse all accordion sections
+    accordionSections.forEach(sectionId => {
+      document.getElementById(sectionId).classList.add('collapsed');
+    });
+
+    // If it was collapsed, open it (if it was already open, everything stays collapsed — re-click to close)
+    if (isCurrentlyCollapsed) {
+      target.classList.remove('collapsed');
+    }
+  }
+
+  // Toggle method detail panel
+  function toggleDetail(detailId) {
+    const panel = document.getElementById(detailId);
+    const row = panel.previousElementSibling;
+    const wasOpen = panel.classList.contains('open');
+
+    // Close all other open detail panels and hide SQ edit form
+    document.querySelectorAll('.method-detail.open').forEach(d => {
+      d.classList.remove('open');
+      if (d.previousElementSibling) d.previousElementSibling.classList.remove('expanded');
+    });
+    if (!wasOpen) {
+      panel.classList.add('open');
+      row.classList.add('expanded');
+    }
+  }
+
+  // Toggle visibility of security question answer
+  function toggleSqVis(btn) {
+    const input = btn.parentElement.querySelector('input');
+    if (input.type === 'text') {
+      input.type = 'password';
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    } else {
+      input.type = 'text';
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    }
+  }
+
+  // Open security questions modal
+  function openSqEdit() {
+    document.getElementById('sq-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSqEdit() {
+    document.getElementById('sq-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // TOTP Modal
+  function openTotpModal() {
+    document.getElementById('totp-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeTotpModal() {
+    document.getElementById('totp-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function copyTotpKey(btn) {
+    var input = btn.parentElement.querySelector('.totp-key-value');
+    navigator.clipboard.writeText(input.value).then(function() {
+      showToast('Key copied to clipboard');
+      btn.style.color = '#12B76A';
+      setTimeout(function() { btn.style.color = ''; }, 1500);
+    }).catch(function() {
+      input.select();
+      document.execCommand('copy');
+      showToast('Key copied to clipboard');
+    });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (document.getElementById('totp-modal').classList.contains('open')) {
+        closeTotpModal();
+      } else if (document.getElementById('sq-modal').classList.contains('open')) {
+        closeSqEdit();
+      }
+    }
+  });
+
+  // Scroll to a specific method row, open its detail panel, and highlight it
+  function scrollToMethod(methodId) {
+    // 1. Open the Sign-in Methods section
+    accordionSections.forEach(id => document.getElementById(id).classList.add('collapsed'));
+    document.getElementById('methods').classList.remove('collapsed');
+
+    // 2. Find the target method row
+    const target = document.getElementById(methodId);
+    if (!target) return;
+
+    // 3. Open its detail panel
+    const onclickAttr = target.getAttribute('onclick') || '';
+    const match = onclickAttr.match(/toggleDetail\('([^']+)'\)/);
+    if (match) {
+      const detailId = match[1];
+      const detail = document.getElementById(detailId);
+      // Close all other open details first
+      document.querySelectorAll('.method-detail.open').forEach(d => {
+        if (d.id !== detailId) d.classList.remove('open');
+      });
+      if (detail && !detail.classList.contains('open')) detail.classList.add('open');
+    }
+
+    // 4. Scroll + highlight
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('highlight');
+      setTimeout(() => target.classList.remove('highlight'), 2500);
+    }, 200);
+  }
+
+  // Review security CTA — cycles through all unconfigured methods
+  let reviewCycleIndex = 0;
+  function reviewSecurity() {
+    const redChips = document.querySelectorAll('.method-chip.not-enrolled');
+    if (redChips.length === 0) return;
+
+    const redMethods = Array.from(redChips).map(chip => chip.getAttribute('data-method'));
+    if (reviewCycleIndex >= redMethods.length) reviewCycleIndex = 0;
+
+    const currentMethod = redMethods[reviewCycleIndex];
+
+    // Update button text with counter
+    const btn = document.querySelector('#securityBanner .btn-primary');
+    if (btn) btn.textContent = 'Fix ' + (reviewCycleIndex + 1) + ' of ' + redMethods.length;
+
+    scrollToMethod(currentMethod);
+    reviewCycleIndex++;
+
+    // Reset after cycling through all
+    if (reviewCycleIndex >= redMethods.length) {
+      setTimeout(() => {
+        reviewCycleIndex = 0;
+        if (btn) btn.textContent = 'Review security';
+      }, 3000);
+    }
+  }
+
+  // Banner dismiss
+  function dismissBanner() {
+    document.getElementById('securityBanner').style.display = 'none';
+  }
+
+  // Toast
+  function showToast(msg) {
+    document.getElementById('toastMessage').textContent = msg;
+    document.getElementById('toast').classList.add('show');
+    setTimeout(() => hideToast(), 4000);
+  }
+  function hideToast() {
+    document.getElementById('toast').classList.remove('show');
+  }
+</script>
+
+<!-- Security Questions Modal -->
+<div class="sq-modal-backdrop" id="sq-modal" onclick="closeSqEdit()">
+  <div class="sq-modal" onclick="event.stopPropagation();">
+    <div class="sq-modal-header">
+      <h3>Change security questions</h3>
+      <button class="sq-modal-close" onclick="closeSqEdit();" title="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sq-modal-body">
+      <p class="sq-helper" style="margin-bottom:20px;">Answer each question with information only you know, making it difficult for unauthorized users to guess.</p>
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="sq-field">
+          <div class="sq-field-label">What was the name of your elementary school?</div>
+          <div class="sq-field-input">
+            <input type="password" value="Zeton Preschool" />
+            <button class="sq-toggle-vis" onclick="toggleSqVis(this);" title="Toggle visibility">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="sq-field">
+          <div class="sq-field-label">Who was your childhood hero?</div>
+          <div class="sq-field-input">
+            <input type="password" value="Iron Man" />
+            <button class="sq-toggle-vis" onclick="toggleSqVis(this);" title="Toggle visibility">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="sq-field">
+          <div class="sq-field-label">What is the name of your favorite childhood friend?</div>
+          <div class="sq-field-input">
+            <input type="password" value="Kahan" />
+            <button class="sq-toggle-vis" onclick="toggleSqVis(this);" title="Toggle visibility">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sq-modal-footer">
+      <button class="btn-secondary" onclick="closeSqEdit();">Cancel</button>
+      <button class="sq-save-btn" onclick="showToast('Security questions saved'); closeSqEdit();">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOTP QR Code Modal -->
+<div class="totp-modal-backdrop" id="totp-modal" onclick="closeTotpModal()">
+  <div class="totp-modal" onclick="event.stopPropagation();">
+    <div class="totp-modal-header">
+      <h3>Use an authenticator app to scan</h3>
+      <button class="totp-modal-close" onclick="closeTotpModal();" title="Close">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+    <div class="totp-modal-body">
+      <p class="totp-modal-desc">Scan this QR code with any authenticator app (like SecureAuth Authenticate or Google Authenticator) to generate time-based one-time passcodes (TOTP).</p>
+      <div class="totp-modal-qr-wrapper">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" fill="#fff"/>
+          <rect x="16" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+          <rect x="22" y="22" width="36" height="36" rx="2" fill="#fff"/>
+          <rect x="28" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+          <rect x="136" y="16" width="48" height="48" rx="4" fill="#0D1F32"/>
+          <rect x="142" y="22" width="36" height="36" rx="2" fill="#fff"/>
+          <rect x="148" y="28" width="24" height="24" rx="2" fill="#0D1F32"/>
+          <rect x="16" y="136" width="48" height="48" rx="4" fill="#0D1F32"/>
+          <rect x="22" y="142" width="36" height="36" rx="2" fill="#fff"/>
+          <rect x="28" y="148" width="24" height="24" rx="2" fill="#0D1F32"/>
+          <rect x="72" y="16" width="8" height="8" fill="#0D1F32"/><rect x="88" y="16" width="8" height="8" fill="#0D1F32"/>
+          <rect x="104" y="16" width="8" height="8" fill="#0D1F32"/><rect x="72" y="32" width="8" height="8" fill="#0D1F32"/>
+          <rect x="96" y="32" width="8" height="8" fill="#0D1F32"/><rect x="112" y="32" width="8" height="8" fill="#0D1F32"/>
+          <rect x="80" y="48" width="8" height="8" fill="#0D1F32"/><rect x="104" y="48" width="8" height="8" fill="#0D1F32"/>
+          <rect x="72" y="72" width="8" height="8" fill="#0D1F32"/><rect x="88" y="72" width="8" height="8" fill="#0D1F32"/>
+          <rect x="112" y="72" width="8" height="8" fill="#0D1F32"/><rect x="136" y="72" width="8" height="8" fill="#0D1F32"/>
+          <rect x="160" y="72" width="8" height="8" fill="#0D1F32"/><rect x="16" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="40" y="80" width="8" height="8" fill="#0D1F32"/><rect x="80" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="104" y="80" width="8" height="8" fill="#0D1F32"/><rect x="128" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="152" y="80" width="8" height="8" fill="#0D1F32"/><rect x="176" y="80" width="8" height="8" fill="#0D1F32"/>
+          <rect x="24" y="96" width="8" height="8" fill="#0D1F32"/><rect x="48" y="96" width="8" height="8" fill="#0D1F32"/>
+          <rect x="72" y="96" width="8" height="8" fill="#0D1F32"/><rect x="96" y="96" width="8" height="8" fill="#0D1F32"/>
+          <rect x="120" y="96" width="8" height="8" fill="#0D1F32"/><rect x="144" y="96" width="8" height="8" fill="#0D1F32"/>
+          <rect x="168" y="96" width="8" height="8" fill="#0D1F32"/><rect x="16" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="40" y="112" width="8" height="8" fill="#0D1F32"/><rect x="56" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="88" y="112" width="8" height="8" fill="#0D1F32"/><rect x="120" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="152" y="112" width="8" height="8" fill="#0D1F32"/><rect x="176" y="112" width="8" height="8" fill="#0D1F32"/>
+          <rect x="72" y="128" width="8" height="8" fill="#0D1F32"/><rect x="96" y="128" width="8" height="8" fill="#0D1F32"/>
+          <rect x="120" y="128" width="8" height="8" fill="#0D1F32"/><rect x="144" y="128" width="8" height="8" fill="#0D1F32"/>
+          <rect x="168" y="128" width="8" height="8" fill="#0D1F32"/><rect x="80" y="144" width="8" height="8" fill="#0D1F32"/>
+          <rect x="104" y="144" width="8" height="8" fill="#0D1F32"/><rect x="136" y="144" width="8" height="8" fill="#0D1F32"/>
+          <rect x="160" y="144" width="8" height="8" fill="#0D1F32"/><rect x="72" y="160" width="8" height="8" fill="#0D1F32"/>
+          <rect x="96" y="160" width="8" height="8" fill="#0D1F32"/><rect x="112" y="160" width="8" height="8" fill="#0D1F32"/>
+          <rect x="144" y="160" width="8" height="8" fill="#0D1F32"/><rect x="176" y="160" width="8" height="8" fill="#0D1F32"/>
+          <rect x="80" y="176" width="8" height="8" fill="#0D1F32"/><rect x="104" y="176" width="8" height="8" fill="#0D1F32"/>
+          <rect x="128" y="176" width="8" height="8" fill="#0D1F32"/><rect x="152" y="176" width="8" height="8" fill="#0D1F32"/>
+        </svg>
+      </div>
+      <div class="totp-modal-key-section">
+        <p class="totp-modal-manual-hint">Can't scan the code? Enter the key manually.</p>
+        <div class="totp-key-box" style="margin:0 auto;">
+          <input class="totp-key-value" type="text" readonly value="QSXHYNVN6IXWJMDFHRE5S2JCMHTG7GLE"/>
+          <button class="totp-key-copy" onclick="copyTotpKey(this);" title="Copy key">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
